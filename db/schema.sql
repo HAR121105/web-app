@@ -1,23 +1,73 @@
--- BAGIAN 1: akun, pelanggan, menu
-DROP TABLE IF EXISTS pelanggan, menu, akun CASCADE;
+-- =============================================================================
+-- SISTEM INFORMASI PENJUALAN TOKO DONAT HABIL
+-- Sumber Kebenaran Basis Data (DDL & Initial Seed)
+-- Normalisasi 3NF & Final ERD
+-- =============================================================================
 
+DROP TABLE IF EXISTS ulasan CASCADE;
+DROP TABLE IF EXISTS riwayat_status_pesanan CASCADE;
+DROP TABLE IF EXISTS transaksi CASCADE;
+DROP TABLE IF EXISTS detail_pesanan CASCADE;
+DROP TABLE IF EXISTS pesanan CASCADE;
+DROP TABLE IF EXISTS persediaan CASCADE;
+DROP TABLE IF EXISTS menu CASCADE;
+DROP TABLE IF EXISTS owner CASCADE;
+DROP TABLE IF EXISTS kitchen CASCADE;
+DROP TABLE IF EXISTS kasir CASCADE;
+DROP TABLE IF EXISTS pelanggan CASCADE;
+DROP TABLE IF EXISTS akun CASCADE;
+
+-- 1. TABEL AKUN
 CREATE TABLE akun (
     id_akun       SERIAL       PRIMARY KEY,
     username      VARCHAR(50)  NOT NULL UNIQUE,
     password_hash TEXT         NOT NULL,
     role          VARCHAR(10)  NOT NULL
-                  CHECK (role IN ('owner','pelanggan','kasir','kitchen'))
+                  CHECK (role IN ('owner', 'pelanggan', 'kasir', 'kitchen'))
 );
 
+-- 2. TABEL PELANGGAN
 CREATE TABLE pelanggan (
     id_pelanggan  VARCHAR(10)  PRIMARY KEY,
-    id_akun       INT          NOT NULL UNIQUE REFERENCES akun(id_akun),
+    id_akun       INT          NOT NULL UNIQUE REFERENCES akun(id_akun) ON DELETE CASCADE,
     nama          VARCHAR(100) NOT NULL,
     tanggal_lahir DATE,
+    no_telepon    VARCHAR(15),
+    email         VARCHAR(100) UNIQUE,
+    alamat        TEXT,
+    kode_pos      VARCHAR(10)
+);
+
+-- 3. TABEL KASIR
+CREATE TABLE kasir (
+    id_kasir      VARCHAR(10)  PRIMARY KEY,
+    id_akun       INT          NOT NULL UNIQUE REFERENCES akun(id_akun) ON DELETE CASCADE,
+    nama_kasir    VARCHAR(100) NOT NULL,
+    tanggal_lahir DATE,
+    alamat        TEXT,
     no_telepon    VARCHAR(15),
     email         VARCHAR(100) UNIQUE
 );
 
+-- 4. TABEL KITCHEN
+CREATE TABLE kitchen (
+    id_kitchen    VARCHAR(10)  PRIMARY KEY,
+    id_akun       INT          NOT NULL UNIQUE REFERENCES akun(id_akun) ON DELETE CASCADE,
+    nama_kitchen  VARCHAR(100) NOT NULL,
+    tanggal_lahir DATE,
+    alamat        TEXT,
+    no_telepon    VARCHAR(15),
+    email         VARCHAR(100) UNIQUE
+);
+
+-- 5. TABEL OWNER
+CREATE TABLE owner (
+    id_owner      VARCHAR(10)  PRIMARY KEY,
+    id_akun       INT          NOT NULL UNIQUE REFERENCES akun(id_akun) ON DELETE CASCADE,
+    nama_owner    VARCHAR(100) NOT NULL
+);
+
+-- 6. TABEL MENU
 CREATE TABLE menu (
     id_menu       VARCHAR(10)  PRIMARY KEY,
     nama_menu     VARCHAR(100) NOT NULL,
@@ -25,9 +75,160 @@ CREATE TABLE menu (
     harga_satuan  INT          NOT NULL CHECK (harga_satuan > 0)
 );
 
-INSERT INTO akun (username, password_hash, role) VALUES ('adzra', 'HASH_DUMMY', 'pelanggan');
-INSERT INTO pelanggan VALUES ('PLG001', 1, 'Adzra', '2005-04-12', '081234561231', 'zhafira@gmail.com');
-INSERT INTO menu VALUES
+-- 7. TABEL PERSEDIAAN
+CREATE TABLE persediaan (
+    id_persediaan     VARCHAR(10) PRIMARY KEY,
+    id_menu           VARCHAR(10) NOT NULL UNIQUE REFERENCES menu(id_menu) ON DELETE CASCADE,
+    jumlah_persediaan INT         NOT NULL DEFAULT 0 CHECK (jumlah_persediaan >= 0)
+);
+
+-- 8. TABEL PESANAN
+CREATE TABLE pesanan (
+    id_pesanan       VARCHAR(10) PRIMARY KEY,
+    id_pelanggan     VARCHAR(10) NOT NULL REFERENCES pelanggan(id_pelanggan),
+    id_kasir         VARCHAR(10) REFERENCES kasir(id_kasir),
+    id_kitchen       VARCHAR(10) REFERENCES kitchen(id_kitchen),
+    tanggal_pesanan  DATE        NOT NULL DEFAULT CURRENT_DATE,
+    waktu_pesanan    TIME        NOT NULL DEFAULT CURRENT_TIME,
+    status_pesanan   VARCHAR(30) NOT NULL DEFAULT 'Menunggu Validasi'
+                     CHECK (status_pesanan IN (
+                         'Menunggu Pembayaran',
+                         'Menunggu Validasi',
+                         'Pembayaran Tidak Valid',
+                         'Diproses Kitchen',
+                         'Siap Diambil',
+                         'Selesai',
+                         'Dibatalkan'
+                     )),
+    estimasi_selesai TIME,
+    waktu_selesai    TIME
+);
+
+-- 9. TABEL DETAIL PESANAN
+CREATE TABLE detail_pesanan (
+    id_pesanan     VARCHAR(10) NOT NULL REFERENCES pesanan(id_pesanan) ON DELETE CASCADE,
+    id_menu        VARCHAR(10) NOT NULL REFERENCES menu(id_menu),
+    jumlah_pesanan INT         NOT NULL CHECK (jumlah_pesanan > 0),
+    harga_satuan   INT         NOT NULL CHECK (harga_satuan > 0),
+    subtotal       INT         NOT NULL CHECK (subtotal > 0),
+    PRIMARY KEY (id_pesanan, id_menu)
+);
+
+-- 10. TABEL TRANSAKSI
+CREATE TABLE transaksi (
+    id_transaksi      VARCHAR(10) PRIMARY KEY,
+    id_pesanan        VARCHAR(10) NOT NULL UNIQUE REFERENCES pesanan(id_pesanan) ON DELETE CASCADE,
+    id_kasir          VARCHAR(10) REFERENCES kasir(id_kasir),
+    waktu_transaksi   TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    total_transaksi   INT         NOT NULL CHECK (total_transaksi > 0),
+    metode_pembayaran VARCHAR(20) NOT NULL CHECK (metode_pembayaran IN ('QRIS', 'Tunai')),
+    status_pembayaran VARCHAR(30) NOT NULL DEFAULT 'Menunggu Validasi'
+                      CHECK (status_pembayaran IN ('Menunggu Validasi', 'Berhasil', 'Tidak Valid')),
+    bukti_pembayaran  TEXT
+);
+
+-- 11. TABEL RIWAYAT STATUS PESANAN
+CREATE TABLE riwayat_status_pesanan (
+    id_riwayat_pesanan SERIAL      PRIMARY KEY,
+    id_pesanan         VARCHAR(10) NOT NULL REFERENCES pesanan(id_pesanan) ON DELETE CASCADE,
+    status_pesanan     VARCHAR(30) NOT NULL,
+    waktu_update       TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 12. TABEL ULASAN
+CREATE TABLE ulasan (
+    id_ulasan        VARCHAR(10) PRIMARY KEY,
+    id_pesanan       VARCHAR(10) NOT NULL UNIQUE REFERENCES pesanan(id_pesanan) ON DELETE CASCADE,
+    kritik_pelanggan TEXT,
+    saran_pelanggan  TEXT
+);
+
+-- =============================================================================
+-- SEED DATA AWAL (Sesuai Normalisasi 3NF dan Data Toko Donat Habil)
+-- Password hash menggunakan bcrypt dengan salt rounds 10
+-- =============================================================================
+
+-- Akun
+-- Password asli:
+-- adzra: Adzra_123 | asqa: #Asqa10 | habiib: Bib@777 | arya: Arya@05
+-- aidil: Aidil@Kasa1 | aini: Aini#123 | daniel: Danil1_Kitchen | mia: Mia@01a | owner: Owner_123
+INSERT INTO akun (id_akun, username, password_hash, role) VALUES
+ (1, 'adzra',  '$2b$10$w7Rbqac/g0DJbENWveO.ruKiWUSotw72n3DUpK6k9i..ZUyvasAEW', 'pelanggan'),
+ (2, 'asqa',   '$2b$10$ucD0Lo880XzXnQ5e.8E6rOD00q6rzuO1VuC29z35PVSUoJWscB/Em', 'pelanggan'),
+ (3, 'habiib', '$2b$10$G7S1Jhp39.11hFF8ba38Ge5bs6V7M/xj8ohXtyJsf1feaYtwFi66C', 'pelanggan'),
+ (4, 'arya',   '$2b$10$DAvMSmLh5vhqpqe4V1o5hehFIIExfSrSiSlAmP9EI0WCpm4uJoGTS', 'pelanggan'),
+ (5, 'aidil',  '$2b$10$PiWEpbzEMCN.YFTj/gUfIeqHNWCt1OizYRTu/g.VDuOnCmTt35rL.', 'kasir'),
+ (6, 'aini',   '$2b$10$jwy5/U58LCCGkGR82ldOPeeKjl90V86QwB54Wa0x20UObmEAveXxi', 'kasir'),
+ (7, 'daniel', '$2b$10$GVFGxhUIb4G9mIwcw9EfkeeK2zf4oPVkfhC6m7lQRflGa1le3dzoW', 'kitchen'),
+ (8, 'mia',    '$2b$10$8rH6miA5OmXaUyEu43fWM.FIbHOE84N.d7a38QLAGryw1uLux8HeS', 'kitchen'),
+ (9, 'owner',  '$2b$10$rLORQzFB.I0P5.pMB2Ort.x71083lWPPXXbFWYGMZB2cSKN0QDklW', 'owner');
+SELECT setval('akun_id_akun_seq', (SELECT MAX(id_akun) FROM akun));
+
+-- Pelanggan
+INSERT INTO pelanggan (id_pelanggan, id_akun, nama, tanggal_lahir, no_telepon, email, alamat, kode_pos) VALUES
+ ('PLG001', 1, 'Adzra',  '2005-04-12', '081234561231', 'zhafira@gmail.com', 'Jl. Melati No. 10',  '2112'),
+ ('PLG002', 2, 'Asqa',   '2004-08-22', '08123454378',  'asqa@gmail.com',    'Jl. Mawar No. 12',   '2113'),
+ ('PLG003', 3, 'Habiib', '2005-01-18', '081234567803', 'habiib@gmail.com',  'Jl. Kenanga No. 8',  '2114'),
+ ('PLG004', 4, 'Arya',   '2005-10-10', '081234561212', 'arya1@gmail.com',   'Jl. Melati No. 30',  '2112');
+
+-- Kasir
+INSERT INTO kasir (id_kasir, id_akun, nama_kasir, tanggal_lahir, alamat, no_telepon, email) VALUES
+ ('KSR001', 5, 'Aidil', '2003-10-15', 'Jl. Anggrek No.14', '089653784320', 'aidilll@gmail.com'),
+ ('KSR002', 6, 'Aini',  '2003-05-23', 'Jl. Anggrek No.34', '089653908765', 'aini12@gmail.com');
+
+-- Kitchen
+INSERT INTO kitchen (id_kitchen, id_akun, nama_kitchen, tanggal_lahir, alamat, no_telepon, email) VALUES
+ ('KTN001', 7, 'Daniel', '2004-01-15', 'Jl. Sudirman No.21', '081234561231', 'daniel123@gmail.com'),
+ ('KTN002', 8, 'Mia',    '2003-01-02', 'Jl. Kusuma No.22',   '081234124300', 'miaa@gmail.com');
+
+-- Owner
+INSERT INTO owner (id_owner, id_akun, nama_owner) VALUES
+ ('OWN001', 9, 'Habil');
+
+-- Menu
+INSERT INTO menu (id_menu, nama_menu, kategori_menu, harga_satuan) VALUES
  ('MNU001', 'Donat Gula Halus',    'Donat Klasik',  4000),
  ('MNU002', 'Donat Cokelat Meses', 'Donat Topping', 4000),
  ('MNU003', 'Donat Keju',          'Donat Topping', 5000);
+
+-- Persediaan
+INSERT INTO persediaan (id_persediaan, id_menu, jumlah_persediaan) VALUES
+ ('PRSD01', 'MNU001', 60),
+ ('PRSD02', 'MNU002', 55),
+ ('PRSD03', 'MNU003', 48);
+
+-- Pesanan
+INSERT INTO pesanan (id_pesanan, id_pelanggan, id_kasir, id_kitchen, tanggal_pesanan, waktu_pesanan, status_pesanan, estimasi_selesai, waktu_selesai) VALUES
+ ('PSN001', 'PLG001', 'KSR001', 'KTN001', '2026-11-01', '09:15:00', 'Selesai', '09:35:00', '09:35:00'),
+ ('PSN002', 'PLG002', 'KSR001', 'KTN001', '2026-11-02', '10:30:00', 'Selesai', '10:50:00', '10:46:00'),
+ ('PSN003', 'PLG003', 'KSR002', 'KTN001', '2026-11-02', '11:15:00', 'Selesai', '11:35:00', '11:35:00'),
+ ('PSN004', 'PLG004', 'KSR001', 'KTN002', '2026-11-03', '10:15:00', 'Selesai', '10:30:00', '10:27:00');
+
+-- Detail Pesanan
+INSERT INTO detail_pesanan (id_pesanan, id_menu, jumlah_pesanan, harga_satuan, subtotal) VALUES
+ ('PSN001', 'MNU001', 2, 4000, 8000),
+ ('PSN002', 'MNU002', 1, 4000, 4000),
+ ('PSN003', 'MNU003', 2, 5000, 10000),
+ ('PSN004', 'MNU001', 4, 4000, 16000);
+
+-- Transaksi
+INSERT INTO transaksi (id_transaksi, id_pesanan, id_kasir, waktu_transaksi, total_transaksi, metode_pembayaran, status_pembayaran, bukti_pembayaran) VALUES
+ ('TRX001', 'PSN001', 'KSR001', '2026-11-01 09:20:00', 8000,  'QRIS',  'Berhasil', '/uploads/qris_psn001.png'),
+ ('TRX002', 'PSN002', 'KSR001', '2026-11-02 10:35:00', 4000,  'Tunai', 'Berhasil', NULL),
+ ('TRX003', 'PSN003', 'KSR002', '2026-11-02 11:20:00', 10000, 'QRIS',  'Berhasil', '/uploads/qris_psn003.png'),
+ ('TRX004', 'PSN004', 'KSR001', '2026-11-03 10:18:00', 16000, 'Tunai', 'Berhasil', NULL);
+
+-- Riwayat Status Pesanan
+INSERT INTO riwayat_status_pesanan (id_pesanan, status_pesanan, waktu_update) VALUES
+ ('PSN001', 'Menunggu Validasi', '2026-11-01 09:15:00'),
+ ('PSN001', 'Diproses Kitchen',  '2026-11-01 09:20:00'),
+ ('PSN001', 'Siap Diambil',      '2026-11-01 09:33:00'),
+ ('PSN001', 'Selesai',           '2026-11-01 09:35:00'),
+ ('PSN002', 'Selesai',           '2026-11-02 10:46:00'),
+ ('PSN003', 'Selesai',           '2026-11-02 11:35:00'),
+ ('PSN004', 'Selesai',           '2026-11-03 10:27:00');
+
+-- Ulasan
+INSERT INTO ulasan (id_ulasan, id_pesanan, kritik_pelanggan, saran_pelanggan) VALUES
+ ('ULS001', 'PSN001', 'Rasa donat sangat enak dan empuk.', 'Perbanyak varian topping matcha.'),
+ ('ULS002', 'PSN002', 'Pelayanan kasir ramah dan cepat.',  'Pertahankan konsistensi rasa.');

@@ -20,15 +20,20 @@ model akun {
   username      String     @unique @db.VarChar(50)
   password_hash String
   role          String     @db.VarChar(10)
+  kasir         kasir?
+  kitchen       kitchen?
+  owner         owner?
   pelanggan     pelanggan?
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model menu {
-  id_menu       String @id @db.VarChar(10)
-  nama_menu     String @db.VarChar(100)
-  kategori_menu String @db.VarChar(50)
-  harga_satuan  Int
+  id_menu        String           @id @db.VarChar(10)
+  nama_menu      String           @db.VarChar(100)
+  kategori_menu  String           @db.VarChar(50)
+  harga_satuan   Int
+  detail_pesanan detail_pesanan[]
+  persediaan     persediaan?
 }
 
 model pelanggan {
@@ -38,5 +43,111 @@ model pelanggan {
   tanggal_lahir DateTime? @db.Date
   no_telepon    String?   @db.VarChar(15)
   email         String?   @unique @db.VarChar(100)
-  akun          akun      @relation(fields: [id_akun], references: [id_akun], onDelete: NoAction, onUpdate: NoAction)
+  alamat        String?
+  kode_pos      String?   @db.VarChar(10)
+  akun          akun      @relation(fields: [id_akun], references: [id_akun], onDelete: Cascade, onUpdate: NoAction)
+  pesanan       pesanan[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model detail_pesanan {
+  id_pesanan     String  @db.VarChar(10)
+  id_menu        String  @db.VarChar(10)
+  jumlah_pesanan Int
+  harga_satuan   Int
+  subtotal       Int
+  menu           menu    @relation(fields: [id_menu], references: [id_menu], onDelete: NoAction, onUpdate: NoAction)
+  pesanan        pesanan @relation(fields: [id_pesanan], references: [id_pesanan], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([id_pesanan, id_menu])
+}
+
+model kasir {
+  id_kasir      String      @id @db.VarChar(10)
+  id_akun       Int         @unique
+  nama_kasir    String      @db.VarChar(100)
+  tanggal_lahir DateTime?   @db.Date
+  alamat        String?
+  no_telepon    String?     @db.VarChar(15)
+  email         String?     @unique @db.VarChar(100)
+  akun          akun        @relation(fields: [id_akun], references: [id_akun], onDelete: Cascade, onUpdate: NoAction)
+  pesanan       pesanan[]
+  transaksi     transaksi[]
+}
+
+model kitchen {
+  id_kitchen    String    @id @db.VarChar(10)
+  id_akun       Int       @unique
+  nama_kitchen  String    @db.VarChar(100)
+  tanggal_lahir DateTime? @db.Date
+  alamat        String?
+  no_telepon    String?   @db.VarChar(15)
+  email         String?   @unique @db.VarChar(100)
+  akun          akun      @relation(fields: [id_akun], references: [id_akun], onDelete: Cascade, onUpdate: NoAction)
+  pesanan       pesanan[]
+}
+
+model owner {
+  id_owner   String @id @db.VarChar(10)
+  id_akun    Int    @unique
+  nama_owner String @db.VarChar(100)
+  akun       akun   @relation(fields: [id_akun], references: [id_akun], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model persediaan {
+  id_persediaan     String @id @db.VarChar(10)
+  id_menu           String @unique @db.VarChar(10)
+  jumlah_persediaan Int    @default(0)
+  menu              menu   @relation(fields: [id_menu], references: [id_menu], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model pesanan {
+  id_pesanan             String                   @id @db.VarChar(10)
+  id_pelanggan           String                   @db.VarChar(10)
+  id_kasir               String?                  @db.VarChar(10)
+  id_kitchen             String?                  @db.VarChar(10)
+  tanggal_pesanan        DateTime                 @default(dbgenerated("CURRENT_DATE")) @db.Date
+  waktu_pesanan          DateTime                 @default(dbgenerated("CURRENT_TIME")) @db.Time(6)
+  status_pesanan         String                   @default("Menunggu Validasi") @db.VarChar(30)
+  estimasi_selesai       DateTime?                @db.Time(6)
+  waktu_selesai          DateTime?                @db.Time(6)
+  detail_pesanan         detail_pesanan[]
+  kasir                  kasir?                   @relation(fields: [id_kasir], references: [id_kasir], onDelete: NoAction, onUpdate: NoAction)
+  kitchen                kitchen?                 @relation(fields: [id_kitchen], references: [id_kitchen], onDelete: NoAction, onUpdate: NoAction)
+  pelanggan              pelanggan                @relation(fields: [id_pelanggan], references: [id_pelanggan], onDelete: NoAction, onUpdate: NoAction)
+  riwayat_status_pesanan riwayat_status_pesanan[]
+  transaksi              transaksi?
+  ulasan                 ulasan?
+}
+
+model riwayat_status_pesanan {
+  id_riwayat_pesanan Int      @id @default(autoincrement())
+  id_pesanan         String   @db.VarChar(10)
+  status_pesanan     String   @db.VarChar(30)
+  waktu_update       DateTime @default(now()) @db.Timestamp(6)
+  pesanan            pesanan  @relation(fields: [id_pesanan], references: [id_pesanan], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model transaksi {
+  id_transaksi      String   @id @db.VarChar(10)
+  id_pesanan        String   @unique @db.VarChar(10)
+  id_kasir          String?  @db.VarChar(10)
+  waktu_transaksi   DateTime @default(now()) @db.Timestamp(6)
+  total_transaksi   Int
+  metode_pembayaran String   @db.VarChar(20)
+  status_pembayaran String   @default("Menunggu Validasi") @db.VarChar(30)
+  bukti_pembayaran  String?
+  kasir             kasir?   @relation(fields: [id_kasir], references: [id_kasir], onDelete: NoAction, onUpdate: NoAction)
+  pesanan           pesanan  @relation(fields: [id_pesanan], references: [id_pesanan], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model ulasan {
+  id_ulasan        String  @id @db.VarChar(10)
+  id_pesanan       String  @unique @db.VarChar(10)
+  kritik_pelanggan String?
+  saran_pelanggan  String?
+  pesanan          pesanan @relation(fields: [id_pesanan], references: [id_pesanan], onDelete: Cascade, onUpdate: NoAction)
 }
