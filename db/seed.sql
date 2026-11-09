@@ -2,24 +2,22 @@
 -- SEED DATA AWAL TOKO DONAT HABIL (Untuk Cloud Database Neon)
 -- Modul 4 APSI - LSIK Universitas Andalas
 -- Password hash menggunakan bcrypt dengan salt rounds 10
--- Akun demo:
--- - Pelanggan : adzra / Adzra_123
--- - Kasir     : aidil / Aidil@Kasa1
--- - Kitchen   : daniel / Danil1_Kitchen
--- - Owner     : owner / Owner_123
+-- Akun demo produksi:
+-- Password dipegang pemilik project, tidak disimpan di repo.
+-- Password acak dibangkitkan lewat scripts/gen-seed-hashes.mjs.
 -- =============================================================================
 
 -- 1. Akun
 INSERT INTO akun (id_akun, username, password_hash, role) VALUES
- (1, 'adzra',  '$2b$10$w7Rbqac/g0DJbENWveO.ruKiWUSotw72n3DUpK6k9i..ZUyvasAEW', 'pelanggan'),
- (2, 'asqa',   '$2b$10$ucD0Lo880XzXnQ5e.8E6rOD00q6rzuO1VuC29z35PVSUoJWscB/Em', 'pelanggan'),
- (3, 'habiib', '$2b$10$G7S1Jhp39.11hFF8ba38Ge5bs6V7M/xj8ohXtyJsf1feaYtwFi66C', 'pelanggan'),
- (4, 'arya',   '$2b$10$DAvMSmLh5vhqpqe4V1o5hehFIIExfSrSiSlAmP9EI0WCpm4uJoGTS', 'pelanggan'),
- (5, 'aidil',  '$2b$10$PiWEpbzEMCN.YFTj/gUfIeqHNWCt1OizYRTu/g.VDuOnCmTt35rL.', 'kasir'),
- (6, 'aini',   '$2b$10$jwy5/U58LCCGkGR82ldOPeeKjl90V86QwB54Wa0x20UObmEAveXxi', 'kasir'),
- (7, 'daniel', '$2b$10$GVFGxhUIb4G9mIwcw9EfkeeK2zf4oPVkfhC6m7lQRflGa1le3dzoW', 'kitchen'),
- (8, 'mia',    '$2b$10$8rH6miA5OmXaUyEu43fWM.FIbHOE84N.d7a38QLAGryw1uLux8HeS', 'kitchen'),
- (9, 'owner',  '$2b$10$rLORQzFB.I0P5.pMB2Ort.x71083lWPPXXbFWYGMZB2cSKN0QDklW', 'owner')
+ (1, 'adzra',  '$2b$10$2Cekt./3dmyOpz4wribcle9u0dkk1XQSXO9gtvYvdlmfFd3j/OGpa', 'pelanggan'),
+ (2, 'asqa',  '$2b$10$J1SgXLsRXn1xhNEwKKoycugJ0MV41KOOl/RPl/YLI6LZ/qSh5f8ve', 'pelanggan'),
+ (3, 'habiib',  '$2b$10$rkYOkE8KZk8V6MGc/8ajH.P.Ro/XmfjvH6d0mPY9OpC9MTGWHsaSS', 'pelanggan'),
+ (4, 'arya',  '$2b$10$Imh.KMWYJqG5NQe0XmX.feCpaB/5W34eYuZrkNxwltzNVX/FUIgoW', 'pelanggan'),
+ (5, 'aidil',  '$2b$10$8ypI44pTU19XcmYI/ThUJu.R2oSC34EaC5ekZqdHQ5ssHOLubc/o.', 'kasir'),
+ (6, 'aini',  '$2b$10$XxpXXXXTQkFf8a3iCBC0VuJti0oLBMvDkqab/pU16CXXFdvIimZFG', 'kasir'),
+ (7, 'daniel',  '$2b$10$dlvjlhcSOQBt3zbRO665Pe.ZIt2Au9N.4nqBjPpdf79CBn7hp5KRu', 'kitchen'),
+ (8, 'mia',  '$2b$10$G1Pf7sxzyXlslX/kBRPXbe4NqmlKCAw5AYAf68R09zPOgMsHKyJJ.', 'kitchen'),
+ (9, 'owner',  '$2b$10$8I0N0Rnr8/7KfFBzdGGvC.hQH0eQY9Ne3bNeKm.xi3MYzWbdM5xHu', 'owner')
 ON CONFLICT (id_akun) DO NOTHING;
 
 SELECT setval('akun_id_akun_seq', (SELECT COALESCE(MAX(id_akun), 1) FROM akun));

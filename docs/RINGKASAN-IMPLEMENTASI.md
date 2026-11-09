@@ -72,7 +72,7 @@ Basis data telah memenuhi bentuk normal ketiga (3NF) sesuai *Final ERD* dengan s
 
 | Role | Username | Password Demo | Kegunaan Uji |
 |---|---|---|---|
-| **Pelanggan** | `adzra` | `Adzra_123` | Uji katalog, pemesanan donat, upload bukti transfer QRIS, & ulasan |
-| **Kasir** | `aidil` | `Aidil@Kasa1` | Uji validasi pembayaran pelanggan, serahkan pesanan, cetak struk |
-| **Kitchen** | `daniel` | `Danil1_Kitchen` | Uji penerimaan antrean masak, input estimasi waktu, & potong stok |
-| **Owner** | `owner` | `Owner_123` | Uji visualisasi laporan omzet, donat terlaris, & rekapitulasi penjualan |
+| **Pelanggan** | `adzra` | *(password dipegang pemilik project, tidak disimpan di repo)* | Uji katalog, pemesanan donat, upload bukti transfer QRIS, & ulasan |
+| **Kasir** | `aidil` | *(password dipegang pemilik project, tidak disimpan di repo)* | Uji validasi pembayaran pelanggan, serahkan pesanan, cetak struk |
+| **Kitchen** | `daniel` | *(password dipegang pemilik project, tidak disimpan di repo)* | Uji penerimaan antrean masak, input estimasi waktu, & potong stok |
+| **Owner** | `owner` | *(password dipegang pemilik project, tidak disimpan di repo)* | Uji visualisasi laporan omzet, donat terlaris, & rekapitulasi penjualan |

@@ -8,13 +8,13 @@ Dokumen ini berisi rancangan dan hasil pengujian *Black Box Testing* untuk Siste
 
 | No | Modul / Use Case | Skenario Uji | Langkah Pengujian | Data Uji | Hasil yang Diharapkan | Status |
 |---|---|---|---|---|---|---|
-| **TC-01** | Autentikasi | Login dengan kredensial benar (Pelanggan) | Input username dan password benar pada tab Pelanggan | `adzra` / `Adzra_123` | Login berhasil, cookie session diterbitkan, dialihkan ke `/pelanggan` | PASS |
-| **TC-02** | Autentikasi | Login dengan kredensial benar (Kasir) | Input username dan password benar pada tab Kasir | `aidil` / `Aidil@Kasa1` | Login berhasil, dialihkan ke `/kasir` | PASS |
-| **TC-03** | Autentikasi | Login dengan kredensial benar (Kitchen) | Input username dan password benar pada tab Kitchen | `daniel` / `Danil1_Kitchen` | Login berhasil, dialihkan ke `/kitchen` | PASS |
-| **TC-04** | Autentikasi | Login dengan kredensial benar (Owner) | Input username dan password benar pada tab Owner | `owner` / `Owner_123` | Login berhasil, dialihkan ke `/owner` | PASS |
-| **TC-05** | Autentikasi | Login dengan password salah | Input username terdaftar dengan password acak | `adzra` / `SalahPass123` | Muncul pesan error "Username atau password salah" (HTTP 401) | PASS |
-| **TC-06** | Autentikasi | Login dengan role yang tidak cocok | Login akun kasir pada tab role Pelanggan | `aidil` / `Aidil@Kasa1` (tab pelanggan) | Ditolak dengan pesan error mismatch role (HTTP 403) | PASS |
-| **TC-07** | Autentikasi | Registrasi akun pelanggan baru | Isi seluruh field pendaftaran pada form `/register` | Username: `budi`, Nama: `Budi`, Pass: `Budi1234` | Akun dan pelanggan tersimpan ke DB dalam `$transaction`, otomatis login | PASS |
+| **TC-01** | Autentikasi | Login dengan kredensial benar (Pelanggan) | Input username dan password benar pada tab Pelanggan | `adzra` / *(password dipegang pemilik project)* | Login berhasil, cookie session diterbitkan, dialihkan ke `/pelanggan` | PASS |
+| **TC-02** | Autentikasi | Login dengan kredensial benar (Kasir) | Input username dan password benar pada tab Kasir | `aidil` / *(password dipegang pemilik project)* | Login berhasil, dialihkan ke `/kasir` | PASS |
+| **TC-03** | Autentikasi | Login dengan kredensial benar (Kitchen) | Input username dan password benar pada tab Kitchen | `daniel` / *(password dipegang pemilik project)* | Login berhasil, dialihkan ke `/kitchen` | PASS |
+| **TC-04** | Autentikasi | Login dengan kredensial benar (Owner) | Input username dan password benar pada tab Owner | `owner` / *(password dipegang pemilik project)* | Login berhasil, dialihkan ke `/owner` | PASS |
+| **TC-05** | Autentikasi | Login dengan password salah | Input username terdaftar dengan password acak | `adzra` / *(password salah)* | Muncul pesan error "Username atau password salah" (HTTP 401) | PASS |
+| **TC-06** | Autentikasi | Login dengan role yang tidak cocok | Login akun kasir pada tab role Pelanggan | `aidil` / *(password kasir)* (tab pelanggan) | Ditolak dengan pesan error mismatch role (HTTP 403) | PASS |
+| **TC-07** | Autentikasi | Registrasi akun pelanggan baru | Isi seluruh field pendaftaran pada form `/register` | Username: `budi`, Nama: `Budi`, Pass: *(valid min 6 char)* | Akun dan pelanggan tersimpan ke DB dalam `$transaction`, otomatis login | PASS |
 | **TC-08** | Autentikasi | Registrasi dengan username duplikat | Daftar dengan username yang telah ada di database | Username: `adzra` | Muncul pesan validasi "Username sudah digunakan" (HTTP 400) | PASS |
 | **TC-09** | Otorisasi / Proxy | Akses rute kasir tanpa login | Buka URL `http://localhost:3000/kasir` di browser baru | *(Tanpa cookie)* | Dialihkan ke halaman `/login?redirect=%2Fkasir` | PASS |
 | **TC-10** | Otorisasi / Proxy | Akses rute kasir oleh role Pelanggan | Login sebagai Pelanggan, coba buka `/kasir` | Cookie role `pelanggan` | Dialihkan kembali ke dashboard role aslinya `/pelanggan` | PASS |

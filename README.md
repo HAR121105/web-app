@@ -75,7 +75,7 @@ Sistem ini mendukung otomatisasi alur pemesanan donat secara multi-role, meliput
 
 ## 👥 Akun Demo Sistem (Sesuai Role & Data Seed)
 
-Gunakan username berikut di halaman `/login` (tersedia juga tombol jalan pintas *Quick Login* di antarmuka login):
+Gunakan username berikut di halaman `/login` (password dipegang pemilik project, tidak disimpan di repo):
 
 | Role | Username Akun Demo | Hak Akses Utama |
 |---|---|---|

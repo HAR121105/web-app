@@ -42,6 +42,9 @@ Dokumen ini memandu langkah demi langkah peluncuran (*deployment*) Sistem Inform
 5. Klik tombol **Deploy**.
 6. Tunggu proses build selesai (~1-2 menit). Vercel akan memberikan domain aktif (misal: `https://web-app-xxxx.vercel.app`).
 
+> [!WARNING]
+> **Penting Mengenai Keamanan Kredensial**: Password lama yang pernah tercatat di riwayat awal git TIDAK BOLEH dipakai di lingkungan produksi Neon. Gunakan password baru yang dibangkitkan secara acak saat menjalankan seed produksi.
+
 ---
 
 ## 3. Uji Asap (*Smoke Test*) Pasca Deployment
@@ -52,10 +55,10 @@ Setelah deployment sukses, lakukan pengujian cepat pada domain produksi:
    - Buka URL utama `/` &rarr; Landing page Donat Habil terbuka.
    - Buka `/login` &rarr; Form login muncul.
 2. **Login & RBAC**:
-   - Klik kartu cepat demo **Pelanggan** (`adzra` / `Adzra_123`) &rarr; Dashboard `/pelanggan` terbuka, katalog donat tampil dengan stok dari Neon.
-   - Logout, lalu login sebagai **Kasir** (`aidil` / `Aidil@Kasa1`) &rarr; Dashboard `/kasir` terbuka, daftar pesanan tampil.
-   - Logout, lalu login sebagai **Kitchen** (`daniel` / `Danil1_Kitchen`) &rarr; Dashboard `/kitchen` terbuka, antrean masak tampil.
-   - Logout, lalu login sebagai **Owner** (`owner` / `Owner_123`) &rarr; Dashboard `/owner` terbuka, grafik omzet dan laporan tampil.
+   - Login sebagai **Pelanggan** (`adzra`, password dipegang pemilik project, tidak disimpan di repo) &rarr; Dashboard `/pelanggan` terbuka, katalog donat tampil dengan stok dari Neon.
+   - Logout, lalu login sebagai **Kasir** (`aidil`, password dipegang pemilik project, tidak disimpan di repo) &rarr; Dashboard `/kasir` terbuka, daftar pesanan tampil.
+   - Logout, lalu login sebagai **Kitchen** (`daniel`, password dipegang pemilik project, tidak disimpan di repo) &rarr; Dashboard `/kitchen` terbuka, antrean masak tampil.
+   - Logout, lalu login sebagai **Owner** (`owner`, password dipegang pemilik project, tidak disimpan di repo) &rarr; Dashboard `/owner` terbuka, grafik omzet dan laporan tampil.
 3. **Pemesanan End-to-End**:
    - Login sebagai pelanggan, buat pesanan donat baru.
    - Login sebagai kasir, lakukan validasi pembayaran.

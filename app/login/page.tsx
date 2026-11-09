@@ -12,12 +12,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleQuickLogin = (u: string, p: string, r: string) => {
-    setUsername(u);
-    setPassword(p);
-    setRole(r);
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -174,51 +168,6 @@ export default function LoginPage() {
             {loading ? "Memproses Masuk..." : "MASUK KE SISTEM"}
           </button>
         </form>
-
-        {/* Demo Akun Cepat */}
-        <div className="mt-6 pt-5 border-t border-[#F0E4D5] text-xs text-center">
-          <p className="text-[#87786F] font-medium mb-2.5">
-            Akun Cepat (Sesuai Data Modul 4):
-          </p>
-          <div className="grid grid-cols-2 gap-2 text-[11px]">
-            <button
-              type="button"
-              onClick={() =>
-                handleQuickLogin("adzra", "Adzra_123", "pelanggan")
-              }
-              className="p-2 rounded-lg bg-[#FAF4ED] hover:bg-[#F2E7DC] text-[#4A3932] border border-[#EADCCE] text-left transition"
-            >
-              <div className="font-bold text-[#F8A106]">👤 Pelanggan</div>
-              <div>adzra / Adzra_123</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickLogin("aidil", "Aidil@Kasa1", "kasir")}
-              className="p-2 rounded-lg bg-[#FAF4ED] hover:bg-[#F2E7DC] text-[#4A3932] border border-[#EADCCE] text-left transition"
-            >
-              <div className="font-bold text-[#77431D]">🧾 Kasir</div>
-              <div>aidil / Aidil@Kasa1</div>
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                handleQuickLogin("daniel", "Danil1_Kitchen", "kitchen")
-              }
-              className="p-2 rounded-lg bg-[#FAF4ED] hover:bg-[#F2E7DC] text-[#4A3932] border border-[#EADCCE] text-left transition"
-            >
-              <div className="font-bold text-[#DE7525]">🍳 Kitchen</div>
-              <div>daniel / Danil1_...</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickLogin("owner", "Owner_123", "owner")}
-              className="p-2 rounded-lg bg-[#FAF4ED] hover:bg-[#F2E7DC] text-[#4A3932] border border-[#EADCCE] text-left transition"
-            >
-              <div className="font-bold text-[#3C2923]">👑 Owner</div>
-              <div>owner / Owner_123</div>
-            </button>
-          </div>
-        </div>
 
         <div className="mt-5 text-center text-xs text-[#7A6B63]">
           Belum punya akun pelanggan?{" "}

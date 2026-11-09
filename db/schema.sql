@@ -149,9 +149,7 @@ CREATE TABLE ulasan (
 -- =============================================================================
 
 -- Akun
--- Password asli:
--- adzra: Adzra_123 | asqa: #Asqa10 | habiib: Bib@777 | arya: Arya@05
--- aidil: Aidil@Kasa1 | aini: Aini#123 | daniel: Danil1_Kitchen | mia: Mia@01a | owner: Owner_123
+-- Password demo lokal: (password dipegang pemilik project, tidak disimpan di repo)
 INSERT INTO akun (id_akun, username, password_hash, role) VALUES
  (1, 'adzra',  '$2b$10$w7Rbqac/g0DJbENWveO.ruKiWUSotw72n3DUpK6k9i..ZUyvasAEW', 'pelanggan'),
  (2, 'asqa',   '$2b$10$ucD0Lo880XzXnQ5e.8E6rOD00q6rzuO1VuC29z35PVSUoJWscB/Em', 'pelanggan'),
