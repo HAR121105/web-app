@@ -28,13 +28,13 @@ Dokumen ini memetakan seluruh tahapan pengerjaan Fase 0 hingga Fase 9 untuk peny
   - [x] `GET /api/pesanan`: Riwayat pesanan milik pelanggan sendiri
   - [x] `POST /api/ulasan`: Form feedback ulasan setelah pesanan selesai
   - [x] Hubungkan `app/pelanggan/page.tsx` ke API dengan state loading & error
-- [ ] **Fase 4: UC2 Kasir (Validasi Pembayaran, Serahkan Pesanan, Cetak Struk, Rekap)**
-  - [ ] `GET /api/kasir/pesanan`: Mengambil semua pesanan masuk (dengan filter status)
-  - [ ] `PATCH /api/transaksi/[id]`: Aksi validasi bayar (`valid` / `tidak_valid`) & teruskan ke kitchen
-  - [ ] `PATCH /api/pesanan/[id]/serahkan`: Kasir menyerahkan donat yang berstatus siap diambil
-  - [ ] `GET /api/transaksi/[id]/struk`: Data struk transaksi untuk cetak fisik
-  - [ ] `GET /api/kasir/rekap`: Rekapitulasi transaksi shift kasir
-  - [ ] Hubungkan `app/kasir/page.tsx` ke API
+- [x] **Fase 4: UC2 Kasir (Validasi Pembayaran, Serahkan Pesanan, Cetak Struk, Rekap)**
+  - [x] `GET /api/kasir/pesanan`: Mengambil semua pesanan masuk (dengan filter status)
+  - [x] `PATCH /api/transaksi/[id]`: Aksi validasi bayar (`valid` / `tidak_valid`) & teruskan ke kitchen
+  - [x] `PATCH /api/pesanan/[id]/serahkan`: Kasir menyerahkan donat yang berstatus siap diambil
+  - [x] `GET /api/transaksi/[id]/struk`: Data struk transaksi untuk cetak fisik
+  - [x] `GET /api/kasir/rekap`: Rekapitulasi transaksi shift kasir
+  - [x] Hubungkan `app/kasir/page.tsx` ke API
 - [ ] **Fase 5: UC3 Kitchen (Antrean Masak, Estimasi Waktu, Update Status, Kelola Stok)**
   - [ ] `GET /api/kitchen/antrean`: Pesanan berstatus pembayaran valid yang belum selesai
   - [ ] `PATCH /api/pesanan/[id]/estimasi`: Input estimasi waktu selesai pengerjaan

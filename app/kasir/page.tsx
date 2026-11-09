@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { logoutClient } from "@/lib/client-auth";
 
 interface PesananKasir {
@@ -12,70 +12,159 @@ interface PesananKasir {
   statusBayar: "Menunggu Validasi" | "Berhasil" | "Tidak Valid";
   statusPesanan: string;
   waktu: string;
-  buktiBayar?: string;
+  buktiBayar?: string | null;
+}
+
+interface RekapKasir {
+  totalOmzet: number;
+  totalTransaksiBerhasil: number;
+  totalMenungguValidasi: number;
+  countQRIS: number;
+  countTunai: number;
+  siapDiambilCount: number;
+  selesaiCount: number;
+  totalSeluruhTransaksi: number;
 }
 
 export default function KasirPage() {
   const [activeMenu, setActiveMenu] = useState<"beranda" | "masuk" | "validasi" | "struk" | "rekap">("validasi");
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // State Pesanan Kasir (Sesuai seed data Modul 4)
-  const [pesananList, setPesananList] = useState<PesananKasir[]>([
-    {
-      id: "PSN005",
-      pelanggan: "Habiib",
-      items: "2x Donat Gula Halus, 1x Donat Keju",
-      total: 13000,
-      metode: "QRIS",
-      statusBayar: "Menunggu Validasi",
-      statusPesanan: "Menunggu Validasi",
-      waktu: "Hari ini, 10:10 WIB",
-      buktiBayar: "bukti_transfer_sample.png",
-    },
-    {
-      id: "PSN001",
-      pelanggan: "Adzra",
-      items: "2x Donat Gula Halus",
-      total: 8000,
-      metode: "QRIS",
-      statusBayar: "Berhasil",
-      statusPesanan: "Selesai",
-      waktu: "10/18/2026, 09:20 WIB",
-      buktiBayar: "/uploads/qris_psn001.png",
-    },
-    {
-      id: "PSN002",
-      pelanggan: "Asqa",
-      items: "1x Donat Cokelat Meses",
-      total: 4000,
-      metode: "Tunai",
-      statusBayar: "Berhasil",
-      statusPesanan: "Selesai",
-      waktu: "10/19/2026, 10:35 WIB",
-    },
-  ]);
+  // State Pesanan Kasir
+  const [pesananList, setPesananList] = useState<PesananKasir[]>([]);
+  const [rekap, setRekap] = useState<RekapKasir>({
+    totalOmzet: 0,
+    totalTransaksiBerhasil: 0,
+    totalMenungguValidasi: 0,
+    countQRIS: 0,
+    countTunai: 0,
+    siapDiambilCount: 0,
+    selesaiCount: 0,
+    totalSeluruhTransaksi: 0,
+  });
 
-  // Modal Cetak Struk
+  // Modal Cetak Struk & Modal Bukti Bayar
   const [selectedStruk, setSelectedStruk] = useState<PesananKasir | null>(null);
+  const [previewBukti, setPreviewBukti] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadDataKasir = async () => {
+      try {
+        const [resPesanan, resRekap] = await Promise.all([
+          fetch("/api/kasir/pesanan"),
+          fetch("/api/kasir/rekap"),
+        ]);
+
+        if (!isCancelled && resPesanan.ok) {
+          const data = await resPesanan.json();
+          if (data.pesanan && Array.isArray(data.pesanan)) {
+            interface RawPesananKasir {
+              id_pesanan: string;
+              pelanggan?: { nama: string };
+              detail_pesanan?: {
+                jumlah_pesanan: number;
+                menu?: { nama_menu: string };
+              }[];
+              transaksi?: {
+                total_transaksi: number;
+                metode_pembayaran: "QRIS" | "Tunai";
+                status_pembayaran: "Menunggu Validasi" | "Berhasil" | "Tidak Valid";
+                bukti_pembayaran?: string | null;
+                waktu_transaksi: string;
+              } | null;
+              status_pesanan: string;
+              tanggal_pesanan: string;
+              waktu_pesanan: string;
+            }
+
+            const mapped: PesananKasir[] = data.pesanan.map((p: RawPesananKasir) => {
+              const itemsDesc = (p.detail_pesanan || [])
+                .map((d) => `${d.jumlah_pesanan}x ${d.menu?.nama_menu || "Donat"}`)
+                .join(", ");
+
+              const waktuFormatted = p.transaksi?.waktu_transaksi
+                ? new Date(p.transaksi.waktu_transaksi).toLocaleString("id-ID", {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                  }) + " WIB"
+                : `${p.tanggal_pesanan ? p.tanggal_pesanan.split("T")[0] : ""} ${p.waktu_pesanan ? new Date(p.waktu_pesanan).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : ""} WIB`;
+
+              return {
+                id: p.id_pesanan,
+                pelanggan: p.pelanggan?.nama || "Pelanggan",
+                items: itemsDesc || "-",
+                total: p.transaksi?.total_transaksi || 0,
+                metode: p.transaksi?.metode_pembayaran || "QRIS",
+                statusBayar: p.transaksi?.status_pembayaran || "Menunggu Validasi",
+                statusPesanan: p.status_pesanan,
+                waktu: waktuFormatted,
+                buktiBayar: p.transaksi?.bukti_pembayaran,
+              };
+            });
+
+            setPesananList(mapped);
+          }
+        }
+
+        if (!isCancelled && resRekap.ok) {
+          const dataRekap = await resRekap.json();
+          if (dataRekap.rekap) {
+            setRekap(dataRekap.rekap);
+          }
+        }
+      } catch (err) {
+        console.error("Gagal memuat data kasir:", err);
+      }
+    };
+
+    loadDataKasir();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [refreshKey]);
 
   // Use Case 2: Memvalidasi Pembayaran
-  const handleValidasi = (id: string, isValid: boolean) => {
-    setPesananList((prev) =>
-      prev.map((p) => {
-        if (p.id === id) {
-          return {
-            ...p,
-            statusBayar: isValid ? "Berhasil" : "Tidak Valid",
-            statusPesanan: isValid ? "Diproses Kitchen" : "Pembayaran Tidak Valid",
-          };
-        }
-        return p;
-      })
-    );
+  const handleValidasi = async (id: string, isValid: boolean) => {
+    try {
+      const res = await fetch(`/api/transaksi/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ aksi: isValid ? "valid" : "tidak_valid" }),
+      });
 
-    if (isValid) {
-      alert(`Pembayaran pesanan ${id} dinyatakan VALID! Pesanan diteruskan ke antrean Dapur (Kitchen).`);
-    } else {
-      alert(`Pembayaran pesanan ${id} dinyatakan TIDAK VALID! Notifikasi dikirimkan ke Pelanggan.`);
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Gagal memproses validasi pembayaran.");
+        return;
+      }
+
+      setRefreshKey((k) => k + 1);
+      alert(data.message || "Validasi berhasil disimpan.");
+    } catch {
+      alert("Terjadi kesalahan jaringan saat memvalidasi pembayaran.");
+    }
+  };
+
+  // Serahkan Pesanan (Status: Siap Diambil -> Selesai)
+  const handleSerahkanPesanan = async (id: string) => {
+    try {
+      const res = await fetch(`/api/pesanan/${id}/serahkan`, {
+        method: "PATCH",
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Gagal menyerahkan pesanan.");
+        return;
+      }
+
+      setRefreshKey((k) => k + 1);
+      alert(data.message || "Pesanan berhasil diserahkan ke pelanggan.");
+    } catch {
+      alert("Terjadi kesalahan jaringan saat menyerahkan pesanan.");
     }
   };
 
@@ -276,12 +365,18 @@ export default function KasirPage() {
                     <div>
                       <span className="text-[#9C897D] block mb-1">Bukti Transfer Pelanggan:</span>
                       {p.buktiBayar ? (
-                        <div className="flex items-center gap-2 p-2 bg-[#FCFAF6] rounded-xl border border-[#EFE5D8]">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewBukti(p.buktiBayar || null)}
+                          className="flex items-center gap-2 p-2 bg-[#FCFAF6] hover:bg-[#FFF0D0] rounded-xl border border-[#EFE5D8] transition text-left w-full cursor-pointer"
+                        >
                           <span className="text-lg">📷</span>
                           <span className="font-mono text-[11px] text-[#4A3932] truncate">
-                            {p.buktiBayar}
+                            {p.buktiBayar.startsWith("data:")
+                              ? "Lihat Foto Bukti Transfer"
+                              : p.buktiBayar}
                           </span>
-                        </div>
+                        </button>
                       ) : (
                         <span className="text-[#9C897D] italic">Pembayaran Tunai di Kasir</span>
                       )}
@@ -311,6 +406,14 @@ export default function KasirPage() {
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
+                        {p.statusPesanan === "Siap Diambil" && (
+                          <button
+                            onClick={() => handleSerahkanPesanan(p.id)}
+                            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-xs transition shadow-sm"
+                          >
+                            🎁 Serahkan ke Pelanggan
+                          </button>
+                        )}
                         <button
                           onClick={() => setSelectedStruk(p)}
                           className="px-4 py-2 bg-[#F6E9DD] hover:bg-[#EED7B8] text-[#77431D] font-bold rounded-xl text-xs transition flex items-center gap-1.5"
@@ -446,20 +549,26 @@ export default function KasirPage() {
                 Kasir: Aidil
               </span>
             </div>
-            <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div className="p-4 bg-[#FCFAF6] rounded-2xl border border-[#EFE5D8]">
                 <span className="text-[#8C7A70]">Total Transaksi</span>
-                <p className="text-xl font-black text-[#3C2923] mt-1">{pesananList.length}</p>
+                <p className="text-xl font-black text-[#3C2923] mt-1">{rekap.totalSeluruhTransaksi}</p>
               </div>
               <div className="p-4 bg-[#FCFAF6] rounded-2xl border border-[#EFE5D8]">
-                <span className="text-[#8C7A70]">Total Pendapatan</span>
+                <span className="text-[#8C7A70]">Total Omzet Berhasil</span>
                 <p className="text-xl font-black text-[#F8A106] mt-1">
-                  Rp{pesananList.filter((p) => p.statusBayar === "Berhasil").reduce((a, b) => a + b.total, 0).toLocaleString("id-ID")}
+                  Rp{rekap.totalOmzet.toLocaleString("id-ID")}
                 </p>
               </div>
               <div className="p-4 bg-[#FCFAF6] rounded-2xl border border-[#EFE5D8]">
                 <span className="text-[#8C7A70]">Menunggu Validasi</span>
-                <p className="text-xl font-black text-orange-600 mt-1">{pendingValidationCount}</p>
+                <p className="text-xl font-black text-orange-600 mt-1">{rekap.totalMenungguValidasi}</p>
+              </div>
+              <div className="p-4 bg-[#FCFAF6] rounded-2xl border border-[#EFE5D8]">
+                <span className="text-[#8C7A70]">Siap Diambil / Selesai</span>
+                <p className="text-xl font-black text-green-700 mt-1">
+                  {rekap.siapDiambilCount} / {rekap.selesaiCount}
+                </p>
               </div>
             </div>
           </div>
@@ -528,6 +637,43 @@ export default function KasirPage() {
                 🖨️ Cetak Fisik
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Preview Bukti Bayar */}
+      {previewBukti && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 border border-[#EFE5D8] shadow-2xl space-y-4 text-center">
+            <div className="flex items-center justify-between border-b border-[#F0E4D5] pb-3">
+              <h4 className="font-extrabold text-sm text-[#3C2923]">Bukti Pembayaran Pelanggan</h4>
+              <button
+                onClick={() => setPreviewBukti(null)}
+                className="w-7 h-7 rounded-full bg-[#F4EBE1] flex items-center justify-center text-xs font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="max-h-[60vh] overflow-auto rounded-2xl border border-[#DDD] p-2 bg-[#FAF7F2]">
+              {previewBukti.startsWith("data:") || previewBukti.startsWith("http") || previewBukti.startsWith("/") ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={previewBukti}
+                  alt="Bukti Transfer"
+                  className="max-h-80 mx-auto object-contain rounded-xl"
+                />
+              ) : (
+                <div className="py-8 text-xs text-[#7A6B63] font-mono">
+                  Nama File Bukti: {previewBukti}
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => setPreviewBukti(null)}
+              className="w-full py-2.5 bg-[#F8A106] text-white font-bold rounded-xl text-xs hover:bg-[#E69300]"
+            >
+              Tutup Preview
+            </button>
           </div>
         </div>
       )}
