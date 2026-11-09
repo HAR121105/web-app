@@ -258,11 +258,11 @@ export default function OwnerPage() {
                 </div>
                 <div>
                   <span className="text-[#8C7A70] font-semibold block">Kritik:</span>
-                  <p className="text-[#3C2923] italic">"{u.kritik}"</p>
+                  <p className="text-[#3C2923] italic">&ldquo;{u.kritik}&rdquo;</p>
                 </div>
                 <div>
                   <span className="text-[#8C7A70] font-semibold block">Saran:</span>
-                  <p className="text-[#77431D] font-medium">"{u.saran}"</p>
+                  <p className="text-[#77431D] font-medium">&ldquo;{u.saran}&rdquo;</p>
                 </div>
               </div>
             ))}

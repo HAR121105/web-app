@@ -7,13 +7,13 @@ Dokumen ini memetakan seluruh tahapan pengerjaan Fase 0 hingga Fase 9 untuk peny
 ## 1. Checklist Fase Pengerjaan
 
 - [x] **Fase 0: Audit Repo & Penyusunan Dokumen Rencana Eksekusi**
-- [ ] **Fase 1: Pembersihan Repo & Scaffold**
-  - [ ] Hapus tabel/model `User` scaffold bawaan create-next-app
-  - [ ] Hapus folder `prisma/migrations`
-  - [ ] Introspeksi ulang `npx prisma db pull` dan `npx prisma generate` (12 model murni)
-  - [ ] Buat file `.env.example`
-  - [ ] Perbarui `package.json` build script: `"prisma generate && next build"`
-  - [ ] Ganti `README.md` dengan dokumentasi resmi proyek dalam bahasa Indonesia
+- [x] **Fase 1: Pembersihan Repo & Scaffold**
+  - [x] Hapus tabel/model `User` scaffold bawaan create-next-app
+  - [x] Hapus folder `prisma/migrations`
+  - [x] Introspeksi ulang `npx prisma db pull` dan `npx prisma generate` (12 model murni)
+  - [x] Buat file `.env.example`
+  - [x] Perbarui `package.json` build script: `"prisma generate && next build"`
+  - [x] Ganti `README.md` dengan dokumentasi resmi proyek dalam bahasa Indonesia
 - [ ] **Fase 2: Autentikasi Nyata & Otorisasi Role (RBAC)**
   - [ ] `lib/session.ts`: Session cookie HMAC-SHA256 (node:crypto, httpOnly, sameSite lax, 8 jam)
   - [ ] `lib/auth.ts`: Helper `getSession()` dan `requireRole(...roles)`
