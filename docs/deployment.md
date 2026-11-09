@@ -54,6 +54,7 @@ Dokumen ini memandu langkah demi langkah peluncuran (*deployment*) Sistem Inform
 
 5. Klik tombol **Deploy**.
 6. Tunggu proses build selesai (~1-2 menit). Vercel akan memberikan domain aktif (misal: `https://web-app-xxxx.vercel.app`).
+   - **Domain Produksi Aktif**: [https://web-app-mu-flame-33.vercel.app](https://web-app-mu-flame-33.vercel.app)
 
 ---
 

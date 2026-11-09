@@ -23,6 +23,7 @@ Sistem ini mendukung otomatisasi alur pemesanan donat secara multi-role, meliput
 - **ORM & Data Layer**: [Prisma ORM](https://www.prisma.io) dengan `@prisma/adapter-pg`
 - **Keamanan**: Hash password dengan `bcryptjs` (salt 10), Session cookie bertanda tangan HMAC-SHA256
 - **Deployment Target**: [Vercel](https://vercel.com)
+- **Live Website**: [https://web-app-mu-flame-33.vercel.app](https://web-app-mu-flame-33.vercel.app)
 
 ---
 
