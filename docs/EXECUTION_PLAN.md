@@ -44,10 +44,10 @@ Dokumen ini memetakan seluruh tahapan pengerjaan Fase 0 hingga Fase 9 untuk peny
 - [x] **Fase 6: Fitur Pendukung Owner (Laporan & Pemantauan Omzet)**
   - [x] `GET /api/owner/laporan`: Agregasi omzet, total pesanan, transaksi, ulasan pelanggan (WIB / Asia/Jakarta)
   - [x] Hubungkan `app/owner/page.tsx` ke API
-- [ ] **Fase 7: Verifikasi Hak Akses & Black Box Testing**
-  - [ ] Skrip `scripts/verify-access.mjs` menguji kepatuhan Permission Matrix
-  - [ ] Dokumen Black Box Testing `docs/test-case.md` (minimal 25 test case)
-  - [ ] Uji fungsional end-to-end (Pelanggan -> Kasir -> Kitchen -> Kasir -> Ulasan -> Owner)
+- [x] **Fase 7: Verifikasi Hak Akses & Black Box Testing**
+  - [x] Skrip `scripts/verify-access.mjs` menguji kepatuhan Permission Matrix
+  - [x] Dokumen Black Box Testing `docs/test-case.md` (minimal 25 test case)
+  - [x] Uji fungsional end-to-end (Pelanggan -> Kasir -> Kitchen -> Kasir -> Ulasan -> Owner)
 - [ ] **Fase 8: Pembaruan Dokumentasi AGENTS.md**
   - [ ] Catat prompt CFC untuk semua fase
   - [ ] Struktur API & Business Rules
