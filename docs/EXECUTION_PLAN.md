@@ -41,9 +41,9 @@ Dokumen ini memetakan seluruh tahapan pengerjaan Fase 0 hingga Fase 9 untuk peny
   - [x] `PATCH /api/pesanan/[id]/status`: Update ke 'Diproses Kitchen' dan 'Siap Diambil' + pemotongan stok otomatis dalam transaksi
   - [x] `GET` & `PATCH /api/kitchen/persediaan`: Memantau dan mengubah jumlah stok donat
   - [x] Hubungkan `app/kitchen/page.tsx` ke API
-- [ ] **Fase 6: Fitur Pendukung Owner (Laporan & Pemantauan Omzet)**
-  - [ ] `GET /api/owner/laporan`: Agregasi omzet, total pesanan, transaksi, ulasan pelanggan (WIB / Asia/Jakarta)
-  - [ ] Hubungkan `app/owner/page.tsx` ke API
+- [x] **Fase 6: Fitur Pendukung Owner (Laporan & Pemantauan Omzet)**
+  - [x] `GET /api/owner/laporan`: Agregasi omzet, total pesanan, transaksi, ulasan pelanggan (WIB / Asia/Jakarta)
+  - [x] Hubungkan `app/owner/page.tsx` ke API
 - [ ] **Fase 7: Verifikasi Hak Akses & Black Box Testing**
   - [ ] Skrip `scripts/verify-access.mjs` menguji kepatuhan Permission Matrix
   - [ ] Dokumen Black Box Testing `docs/test-case.md` (minimal 25 test case)

@@ -1,78 +1,72 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { logoutClient } from "@/lib/client-auth";
+
+interface TransaksiOwner {
+  id: string;
+  pesananId: string;
+  pelanggan: string;
+  kasir: string;
+  waktu: string;
+  items: string;
+  total: number;
+  metode: string;
+  status: string;
+}
+
+interface UlasanOwner {
+  id: string;
+  pesananId: string;
+  pelanggan: string;
+  kritik: string;
+  saran: string;
+}
+
+interface TopMenuItem {
+  id_menu: string;
+  nama: string;
+  terjual: number;
+  subtotal: number;
+}
 
 export default function OwnerPage() {
   const [periode, setPeriode] = useState<"hari_ini" | "minggu_ini" | "bulan_ini">("bulan_ini");
+  const [transaksiList, setTransaksiList] = useState<TransaksiOwner[]>([]);
+  const [ulasanList, setUlasanList] = useState<UlasanOwner[]>([]);
+  const [topMenuList, setTopMenuList] = useState<TopMenuItem[]>([]);
+  const [totalOmzet, setTotalOmzet] = useState<number>(0);
+  const [totalPesanan, setTotalPesanan] = useState<number>(0);
+  const [rataRata, setRataRata] = useState<number>(0);
 
-  // Data Rekap Transaksi (Sesuai seed data Modul 4)
-  const transaksiList = [
-    {
-      id: "TRX001",
-      pesananId: "PSN001",
-      pelanggan: "Adzra",
-      kasir: "Aidil",
-      waktu: "2026-11-01 09:20 WIB",
-      items: "2x Donat Gula Halus",
-      total: 8000,
-      metode: "QRIS",
-      status: "Berhasil",
-    },
-    {
-      id: "TRX002",
-      pesananId: "PSN002",
-      pelanggan: "Asqa",
-      kasir: "Aidil",
-      waktu: "2026-11-02 10:35 WIB",
-      items: "1x Donat Cokelat Meses",
-      total: 4000,
-      metode: "Tunai",
-      status: "Berhasil",
-    },
-    {
-      id: "TRX003",
-      pesananId: "PSN003",
-      pelanggan: "Habiib",
-      kasir: "Aini",
-      waktu: "2026-11-02 11:20 WIB",
-      items: "2x Donat Keju",
-      total: 10000,
-      metode: "QRIS",
-      status: "Berhasil",
-    },
-    {
-      id: "TRX004",
-      pesananId: "PSN004",
-      pelanggan: "Arya",
-      kasir: "Aidil",
-      waktu: "2026-11-03 10:18 WIB",
-      items: "4x Donat Gula Halus",
-      total: 16000,
-      metode: "Tunai",
-      status: "Berhasil",
-    },
-  ];
+  useEffect(() => {
+    let isCancelled = false;
 
-  // Data Ulasan Pelanggan
-  const ulasanList = [
-    {
-      id: "ULS001",
-      pesananId: "PSN001",
-      pelanggan: "Adzra",
-      kritik: "Rasa donat sangat enak dan empuk.",
-      saran: "Perbanyak varian topping matcha dan minuman dingin.",
-    },
-    {
-      id: "ULS002",
-      pesananId: "PSN002",
-      pelanggan: "Asqa",
-      kritik: "Pelayanan kasir ramah dan cepat.",
-      saran: "Pertahankan konsistensi rasa dan packaging.",
-    },
-  ];
+    const loadLaporanOwner = async () => {
+      try {
+        const res = await fetch(`/api/owner/laporan?periode=${periode}`);
+        if (!isCancelled && res.ok) {
+          const data = await res.json();
+          if (data.laporan) {
+            setTransaksiList(data.laporan.transaksi || []);
+            setUlasanList(data.laporan.ulasan || []);
+            setTopMenuList(data.laporan.topMenu || []);
+            setTotalOmzet(data.laporan.totalOmzet || 0);
+            setTotalPesanan(data.laporan.totalTransaksiBerhasil || 0);
+            setRataRata(data.laporan.rataRataTransaksi || 0);
+          }
+        }
+      } catch (err) {
+        console.error("Gagal memuat laporan owner:", err);
+      }
+    };
 
-  const totalOmzet = transaksiList.reduce((acc, curr) => acc + curr.total, 0);
+    loadLaporanOwner();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [periode]);
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] text-[#3C2923] flex flex-col">
@@ -157,10 +151,10 @@ export default function OwnerPage() {
               Total Pesanan
             </span>
             <div className="text-2xl font-black text-[#3C2923] mt-2">
-              {transaksiList.length} Pesanan
+              {totalPesanan} Pesanan
             </div>
             <span className="text-[11px] text-[#8C7A70] block mt-1">
-              100% Selesai Dikerjakan
+              Periode {periode.replace("_", " ")}
             </span>
           </div>
 
@@ -169,10 +163,10 @@ export default function OwnerPage() {
               Rata-rata Order
             </span>
             <div className="text-2xl font-black text-[#77431D] mt-2">
-              Rp{(totalOmzet / transaksiList.length).toLocaleString("id-ID")}
+              Rp{rataRata.toLocaleString("id-ID")}
             </div>
             <span className="text-[11px] text-[#8C7A70] block mt-1">
-              Per Keranjang Belanja
+              Per Transaksi Berhasil
             </span>
           </div>
 
@@ -189,6 +183,40 @@ export default function OwnerPage() {
           </div>
         </div>
 
+        {/* Donat Terlaris Periode Ini */}
+        {topMenuList.length > 0 && (
+          <div className="bg-white rounded-3xl p-6 border border-[#EFE5D8] shadow-sm space-y-3">
+            <h3 className="font-black text-base text-[#3C2923]">
+              Donat Terlaris ({periode.replace("_", " ")})
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {topMenuList.map((item, idx) => (
+                <div
+                  key={item.id_menu}
+                  className="p-4 rounded-2xl bg-[#FCFAF6] border border-[#EFE5D8] flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="w-7 h-7 rounded-full bg-[#FFF0D0] text-[#77431D] font-extrabold flex items-center justify-center text-xs">
+                      #{idx + 1}
+                    </span>
+                    <div>
+                      <div className="font-extrabold text-xs text-[#3C2923]">
+                        {item.nama}
+                      </div>
+                      <div className="text-[11px] text-[#8C7A70]">
+                        Terjual {item.terjual} pcs
+                      </div>
+                    </div>
+                  </div>
+                  <span className="font-bold text-xs text-[#F8A106]">
+                    Rp{item.subtotal.toLocaleString("id-ID")}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Tabel Rekap Transaksi Penjualan */}
         <div className="bg-white rounded-3xl p-6 border border-[#EFE5D8] shadow-sm space-y-4">
           <div className="flex items-center justify-between">
@@ -196,7 +224,7 @@ export default function OwnerPage() {
               Data Transaksi Penjualan (Sesuai Normalisasi 3NF)
             </h3>
             <span className="text-xs bg-[#FFF0D0] text-[#77431D] font-bold px-3 py-1 rounded-full">
-              4 Data Terverifikasi
+              {transaksiList.length} Data Terverifikasi
             </span>
           </div>
 
