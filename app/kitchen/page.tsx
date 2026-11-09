@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { logoutClient } from "@/lib/client-auth";
 
 interface AntreanDapur {
@@ -12,75 +12,202 @@ interface AntreanDapur {
   waktuMasuk: string;
 }
 
+interface PersediaanItem {
+  id: string;
+  menuId: string;
+  nama: string;
+  stok: number;
+  kategori: string;
+}
+
 export default function KitchenPage() {
   const [activeTab, setActiveTab] = useState<"antrian" | "persediaan">("antrian");
   const [filterStatus, setFilterStatus] = useState<string>("Semua");
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // State Antrean Masak (Hanya pesanan yang sudah tervalidasi bayar)
-  const [antrean, setAntrean] = useState<AntreanDapur[]>([
-    {
-      id: "PSN005",
-      pelanggan: "Habiib",
-      items: "2x Donat Gula Halus, 1x Donat Keju",
-      status: "Perlu Estimasi",
-      estimasi: "-",
-      waktuMasuk: "10:10 WIB",
-    },
-    {
-      id: "PSN006",
-      pelanggan: "Arya",
-      items: "4x Donat Gula Halus",
-      status: "Diproses",
-      estimasi: "15 Menit (10:30 WIB)",
-      waktuMasuk: "10:15 WIB",
-    },
-    {
-      id: "PSN001",
-      pelanggan: "Adzra",
-      items: "2x Donat Gula Halus",
-      status: "Siap Diambil",
-      estimasi: "09:35 WIB",
-      waktuMasuk: "09:15 WIB",
-    },
-  ]);
+  // State Antrean Masak
+  const [antrean, setAntrean] = useState<AntreanDapur[]>([]);
 
   // State Persediaan Stok
-  const [persediaan, setPersediaan] = useState([
-    { id: "PRSD01", menuId: "MNU001", nama: "Donat Gula Halus", stok: 60, kategori: "Donat Klasik" },
-    { id: "PRSD02", menuId: "MNU002", nama: "Donat Cokelat Meses", stok: 55, kategori: "Donat Topping" },
-    { id: "PRSD03", menuId: "MNU003", nama: "Donat Keju", stok: 48, kategori: "Donat Topping" },
-  ]);
+  const [persediaan, setPersediaan] = useState<PersediaanItem[]>([]);
 
   // Modal Estimasi Waktu (Use Case 3)
   const [estimasiModal, setEstimasiModal] = useState<{ open: boolean; pesananId: string }>({
     open: false,
     pesananId: "",
   });
-  const [inputEstimasi, setInputEstimasi] = useState("15 Menit");
+  const [inputEstimasi, setInputEstimasi] = useState("15");
 
-  const handleSimpanEstimasi = () => {
-    setAntrean((prev) =>
-      prev.map((item) =>
-        item.id === estimasiModal.pesananId
-          ? { ...item, estimasi: inputEstimasi, status: "Diproses" }
-          : item
-      )
-    );
-    setEstimasiModal({ open: false, pesananId: "" });
-    alert(`Estimasi waktu untuk ${estimasiModal.pesananId} berhasil dikirim ke Pelanggan & Kasir! Status berubah menjadi 'Diproses'.`);
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadKitchenData = async () => {
+      try {
+        const [resAntrean, resPersediaan] = await Promise.all([
+          fetch("/api/kitchen/antrean"),
+          fetch("/api/kitchen/persediaan"),
+        ]);
+
+        if (!isCancelled && resAntrean.ok) {
+          const dataAntrean = await resAntrean.json();
+          if (dataAntrean.antrean && Array.isArray(dataAntrean.antrean)) {
+            interface RawAntrean {
+              id_pesanan: string;
+              pelanggan?: { nama: string };
+              detail_pesanan?: {
+                jumlah_pesanan: number;
+                menu?: { nama_menu: string };
+              }[];
+              status_pesanan: string;
+              estimasi_selesai?: string | null;
+              waktu_pesanan: string;
+            }
+
+            const mapped: AntreanDapur[] = dataAntrean.antrean.map((a: RawAntrean) => {
+              const itemsDesc = (a.detail_pesanan || [])
+                .map((d) => `${d.jumlah_pesanan}x ${d.menu?.nama_menu || "Donat"}`)
+                .join(", ");
+
+              const waktuMasukStr = a.waktu_pesanan
+                ? new Date(a.waktu_pesanan).toLocaleTimeString("id-ID", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }) + " WIB"
+                : "-";
+
+              let uiStatus: "Perlu Estimasi" | "Diproses" | "Siap Diambil" | "Selesai" = "Perlu Estimasi";
+              let estimasiStr = "-";
+
+              if (a.status_pesanan === "Siap Diambil") {
+                uiStatus = "Siap Diambil";
+                estimasiStr = "Selesai dimasak";
+              } else if (a.status_pesanan === "Selesai") {
+                uiStatus = "Selesai";
+                estimasiStr = "Selesai";
+              } else if (a.estimasi_selesai) {
+                uiStatus = "Diproses";
+                estimasiStr = new Date(a.estimasi_selesai).toLocaleTimeString("id-ID", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }) + " WIB";
+              } else {
+                uiStatus = "Perlu Estimasi";
+                estimasiStr = "-";
+              }
+
+              return {
+                id: a.id_pesanan,
+                pelanggan: a.pelanggan?.nama || "Pelanggan",
+                items: itemsDesc || "-",
+                status: uiStatus,
+                estimasi: estimasiStr,
+                waktuMasuk: waktuMasukStr,
+              };
+            });
+
+            setAntrean(mapped);
+          }
+        }
+
+        if (!isCancelled && resPersediaan.ok) {
+          const dataStok = await resPersediaan.json();
+          if (dataStok.persediaan && Array.isArray(dataStok.persediaan)) {
+            const mappedStok: PersediaanItem[] = dataStok.persediaan.map((p: {
+              id_persediaan: string;
+              id_menu: string;
+              nama_menu: string;
+              kategori_menu: string;
+              jumlah_persediaan: number;
+            }) => ({
+              id: p.id_persediaan,
+              menuId: p.id_menu,
+              nama: p.nama_menu,
+              kategori: p.kategori_menu,
+              stok: p.jumlah_persediaan,
+            }));
+            setPersediaan(mappedStok);
+          }
+        }
+      } catch (err) {
+        console.error("Gagal memuat data dapur:", err);
+      }
+    };
+
+    loadKitchenData();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [refreshKey]);
+
+  const handleSimpanEstimasi = async () => {
+    const menit = parseInt(inputEstimasi.replace(/\D/g, ""), 10) || 15;
+
+    try {
+      const res = await fetch(`/api/pesanan/${estimasiModal.pesananId}/estimasi`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estimasi_menit: menit }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Gagal menyimpan estimasi.");
+        return;
+      }
+
+      setEstimasiModal({ open: false, pesananId: "" });
+      setRefreshKey((k) => k + 1);
+      alert(data.message || `Estimasi ${menit} menit berhasil disimpan!`);
+    } catch {
+      alert("Terjadi kesalahan jaringan saat mengirim estimasi waktu.");
+    }
   };
 
-  const handleUpdateStatus = (id: string, newStatus: "Diproses" | "Siap Diambil" | "Selesai") => {
-    setAntrean((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, status: newStatus } : item))
-    );
-    alert(`Status pesanan ${id} berhasil diperbarui menjadi '${newStatus}'!`);
+  const handleKonfirmasiSiapDiambil = async (id: string) => {
+    try {
+      const res = await fetch(`/api/pesanan/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "Siap Diambil" }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Gagal memperbarui status pesanan.");
+        return;
+      }
+
+      setRefreshKey((k) => k + 1);
+      alert(data.message || `Pesanan ${id} siap diambil! Stok telah dipotong.`);
+    } catch {
+      alert("Terjadi kesalahan jaringan saat memperbarui status pesanan.");
+    }
   };
 
-  const updateStok = (id: string, delta: number) => {
-    setPersediaan((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, stok: Math.max(0, p.stok + delta) } : p))
-    );
+  const updateStok = async (id: string, delta: number) => {
+    const item = persediaan.find((p) => p.id === id);
+    if (!item) return;
+
+    const newStok = Math.max(0, item.stok + delta);
+
+    try {
+      const res = await fetch(`/api/kitchen/persediaan/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jumlah_persediaan: newStok }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Gagal memperbarui persediaan.");
+        return;
+      }
+
+      setRefreshKey((k) => k + 1);
+    } catch {
+      alert("Terjadi kesalahan jaringan saat memperbarui persediaan.");
+    }
   };
 
   const filteredAntrean = antrean.filter((a) => {
@@ -239,7 +366,7 @@ export default function KitchenPage() {
 
                     {a.status === "Diproses" && (
                       <button
-                        onClick={() => handleUpdateStatus(a.id, "Siap Diambil")}
+                        onClick={() => handleKonfirmasiSiapDiambil(a.id)}
                         className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-xs shadow-sm"
                       >
                         ✓ Konfirmasi Pesanan Selesai (Siap Diambil)

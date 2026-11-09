@@ -35,12 +35,12 @@ Dokumen ini memetakan seluruh tahapan pengerjaan Fase 0 hingga Fase 9 untuk peny
   - [x] `GET /api/transaksi/[id]/struk`: Data struk transaksi untuk cetak fisik
   - [x] `GET /api/kasir/rekap`: Rekapitulasi transaksi shift kasir
   - [x] Hubungkan `app/kasir/page.tsx` ke API
-- [ ] **Fase 5: UC3 Kitchen (Antrean Masak, Estimasi Waktu, Update Status, Kelola Stok)**
-  - [ ] `GET /api/kitchen/antrean`: Pesanan berstatus pembayaran valid yang belum selesai
-  - [ ] `PATCH /api/pesanan/[id]/estimasi`: Input estimasi waktu selesai pengerjaan
-  - [ ] `PATCH /api/pesanan/[id]/status`: Update ke 'Diproses Kitchen' dan 'Siap Diambil' + pemotongan stok otomatis dalam transaksi
-  - [ ] `GET` & `PATCH /api/kitchen/persediaan`: Memantau dan mengubah jumlah stok donat
-  - [ ] Hubungkan `app/kitchen/page.tsx` ke API
+- [x] **Fase 5: UC3 Kitchen (Antrean Masak, Estimasi Waktu, Update Status, Kelola Stok)**
+  - [x] `GET /api/kitchen/antrean`: Pesanan berstatus pembayaran valid yang belum selesai
+  - [x] `PATCH /api/pesanan/[id]/estimasi`: Input estimasi waktu selesai pengerjaan
+  - [x] `PATCH /api/pesanan/[id]/status`: Update ke 'Diproses Kitchen' dan 'Siap Diambil' + pemotongan stok otomatis dalam transaksi
+  - [x] `GET` & `PATCH /api/kitchen/persediaan`: Memantau dan mengubah jumlah stok donat
+  - [x] Hubungkan `app/kitchen/page.tsx` ke API
 - [ ] **Fase 6: Fitur Pendukung Owner (Laporan & Pemantauan Omzet)**
   - [ ] `GET /api/owner/laporan`: Agregasi omzet, total pesanan, transaksi, ulasan pelanggan (WIB / Asia/Jakarta)
   - [ ] Hubungkan `app/owner/page.tsx` ke API
