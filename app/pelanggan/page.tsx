@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { logoutClient } from "@/lib/client-auth";
 
@@ -12,13 +12,47 @@ interface CartItem {
   image: string;
 }
 
+interface MenuItem {
+  id: string;
+  name: string;
+  kategori: string;
+  price: number;
+  image: string;
+  desc: string;
+  stok: number;
+}
+
+interface PesananDisplay {
+  id: string;
+  tanggal: string;
+  waktu: string;
+  items: string;
+  total: number;
+  metode: string;
+  status: string;
+  estimasi: string;
+  bukti?: string | null;
+  ulasanAda: boolean;
+}
+
+const getEmojiForDonut = (nama: string) => {
+  const n = nama.toLowerCase();
+  if (n.includes("cokelat") || n.includes("meses")) return "🍫";
+  if (n.includes("keju") || n.includes("cheese")) return "🧀";
+  if (n.includes("matcha") || n.includes("green tea")) return "🍵";
+  if (n.includes("stroberi") || n.includes("strawberry")) return "🍓";
+  if (n.includes("kacang") || n.includes("almond")) return "🥜";
+  return "🍩";
+};
+
 export default function PelangganPage() {
   const [activeTab, setActiveTab] = useState<"katalog" | "pesanan">("katalog");
   const [selectedKategori, setSelectedKategori] = useState<string>("Semua");
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // Data Menu Donat
-  const menuList = [
+  const [menuList, setMenuList] = useState<MenuItem[]>([
     {
       id: "MNU001",
       name: "Donat Gula Halus",
@@ -46,44 +80,18 @@ export default function PelangganPage() {
       desc: "Donat empuk gurih dengan parutan keju cheddar melimpah dan krim manis spesial.",
       stok: 48,
     },
-  ];
+  ]);
 
   // State Keranjang
-  const [cart, setCart] = useState<CartItem[]>([
-    { id: "MNU001", name: "Donat Gula Halus", price: 4000, qty: 2, image: "🍩" },
-  ]);
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [metodeBayar, setMetodeBayar] = useState<"QRIS" | "Tunai">("QRIS");
   const [buktiBayar, setBuktiBayar] = useState<string | null>(null);
+  const [buktiFileName, setBuktiFileName] = useState<string>("");
 
-  // State Pesanan Pelanggan (Data Awal Sesuai Modul 4)
-  const [pesananList, setPesananList] = useState([
-    {
-      id: "PSN001",
-      tanggal: "2026-11-01",
-      waktu: "09:15",
-      items: "2x Donat Gula Halus",
-      total: 8000,
-      metode: "QRIS",
-      status: "Selesai",
-      estimasi: "09:35",
-      bukti: "/uploads/qris_psn001.png",
-      ulasanAda: true,
-    },
-    {
-      id: "PSN005",
-      tanggal: "2026-11-08",
-      waktu: "10:10",
-      items: "2x Donat Gula Halus, 1x Donat Keju",
-      total: 13000,
-      metode: "QRIS",
-      status: "Menunggu Validasi",
-      estimasi: "Menunggu Kasir...",
-      bukti: "bukti_transfer_sample.png",
-      ulasanAda: false,
-    },
-  ]);
+  // State Pesanan Pelanggan
+  const [pesananList, setPesananList] = useState<PesananDisplay[]>([]);
 
   // Modal Ulasan
   const [ulasanModal, setUlasanModal] = useState<{ open: boolean; pesananId: string }>({
@@ -92,6 +100,118 @@ export default function PelangganPage() {
   });
   const [kritik, setKritik] = useState("");
   const [saran, setSaran] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadInitialData = async () => {
+      try {
+        const [resMenu, resPesanan] = await Promise.all([
+          fetch("/api/menu"),
+          fetch("/api/pesanan"),
+        ]);
+
+        if (!isCancelled && resMenu.ok) {
+          const data = await resMenu.json();
+          if (data.menus && Array.isArray(data.menus)) {
+            const mapped: MenuItem[] = data.menus.map((m: {
+              id_menu: string;
+              nama_menu: string;
+              kategori_menu: string;
+              harga_satuan: number;
+              jumlah_persediaan: number;
+            }) => ({
+              id: m.id_menu,
+              name: m.nama_menu,
+              kategori: m.kategori_menu,
+              price: m.harga_satuan,
+              image: getEmojiForDonut(m.nama_menu),
+              desc: `Donat lezat ${m.nama_menu} kategori ${m.kategori_menu} dibuat hangat dengan bahan premium.`,
+              stok: m.jumlah_persediaan,
+            }));
+            setMenuList(mapped);
+          }
+        }
+
+        if (!isCancelled && resPesanan.ok) {
+          const data = await resPesanan.json();
+          if (data.pesanan && Array.isArray(data.pesanan)) {
+            interface RawPesanan {
+              id_pesanan: string;
+              tanggal_pesanan: string;
+              waktu_pesanan: string;
+              status_pesanan: string;
+              estimasi_selesai?: string | null;
+              transaksi?: {
+                total_transaksi: number;
+                metode_pembayaran: string;
+                bukti_pembayaran?: string | null;
+              } | null;
+              detail_pesanan?: {
+                jumlah_pesanan: number;
+                menu?: { nama_menu: string };
+              }[];
+              ulasan?: { id_ulasan: string } | null;
+            }
+
+            const mapped: PesananDisplay[] = data.pesanan.map((p: RawPesanan) => {
+              const itemsDesc = (p.detail_pesanan || [])
+                .map((d) => `${d.jumlah_pesanan}x ${d.menu?.nama_menu || "Donat"}`)
+                .join(", ");
+
+              const tgl = p.tanggal_pesanan ? p.tanggal_pesanan.split("T")[0] : "-";
+              const waktu = p.waktu_pesanan
+                ? new Date(p.waktu_pesanan).toLocaleTimeString("id-ID", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : "-";
+
+              let estimasiStr = "-";
+              if (p.estimasi_selesai) {
+                estimasiStr = new Date(p.estimasi_selesai).toLocaleTimeString("id-ID", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }) + " WIB";
+              } else if (p.status_pesanan === "Menunggu Validasi") {
+                estimasiStr = "Menunggu Kasir...";
+              } else if (p.status_pesanan === "Diproses Kitchen") {
+                estimasiStr = "Sedang dimasak...";
+              } else if (p.status_pesanan === "Siap Diambil") {
+                estimasiStr = "Siap diambil di kasir!";
+              } else if (p.status_pesanan === "Selesai") {
+                estimasiStr = "Selesai";
+              }
+
+              return {
+                id: p.id_pesanan,
+                tanggal: tgl,
+                waktu,
+                items: itemsDesc || "-",
+                total: p.transaksi?.total_transaksi || 0,
+                metode: p.transaksi?.metode_pembayaran || "QRIS",
+                status: p.status_pesanan,
+                estimasi: estimasiStr,
+                bukti: p.transaksi?.bukti_pembayaran,
+                ulasanAda: Boolean(p.ulasan),
+              };
+            });
+
+            setPesananList(mapped);
+          }
+        }
+      } catch (e) {
+        console.error("Gagal memuat data awal:", e);
+      }
+    };
+
+    loadInitialData();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [refreshKey]);
 
   const addToCart = (menu: typeof menuList[0]) => {
     setCart((prev) => {
@@ -121,40 +241,81 @@ export default function PelangganPage() {
 
   const totalCart = cart.reduce((acc, curr) => acc + curr.price * curr.qty, 0);
 
-  const handleKirimPesanan = () => {
+  const handleKirimPesanan = async () => {
     if (cart.length === 0) return;
-    const newId = `PSN00${pesananList.length + 1}`;
-    const itemsDesc = cart.map((c) => `${c.qty}x ${c.name}`).join(", ");
 
-    const newPesanan = {
-      id: newId,
-      tanggal: "2026-11-08",
-      waktu: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
-      items: itemsDesc,
-      total: totalCart,
-      metode: metodeBayar,
-      status: "Menunggu Validasi",
-      estimasi: "Menunggu Kasir...",
-      bukti: buktiBayar || "bukti_bayar_mandiri.png",
-      ulasanAda: false,
-    };
+    if (metodeBayar === "QRIS" && !buktiBayar) {
+      const confirmNoProof = window.confirm(
+        "Anda belum melampirkan bukti pembayaran QRIS. Tetap ingin membuat pesanan dan mengunggahnya nanti?"
+      );
+      if (!confirmNoProof) return;
+    }
 
-    setPesananList([newPesanan, ...pesananList]);
-    setCart([]);
-    setIsCheckoutOpen(false);
-    setIsCartOpen(false);
-    setActiveTab("pesanan");
-    alert(`Pesanan ${newId} berhasil dibuat! Menunggu verifikasi pembayaran oleh Kasir.`);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/pesanan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          metode_pembayaran: metodeBayar,
+          bukti_pembayaran: buktiBayar || null,
+          items: cart.map((c) => ({ id_menu: c.id, jumlah: c.qty })),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Gagal membuat pesanan.");
+        setLoading(false);
+        return;
+      }
+
+      setCart([]);
+      setBuktiBayar(null);
+      setBuktiFileName("");
+      setIsCheckoutOpen(false);
+      setIsCartOpen(false);
+      setActiveTab("pesanan");
+      setRefreshKey((k) => k + 1);
+      alert(`Pesanan ${data.pesanan?.id_pesanan || ""} berhasil dibuat! Menunggu verifikasi Kasir.`);
+    } catch {
+      alert("Terjadi kesalahan jaringan saat mengirim pesanan.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSimpanUlasan = () => {
-    setPesananList((prev) =>
-      prev.map((p) => (p.id === ulasanModal.pesananId ? { ...p, ulasanAda: true } : p))
-    );
-    setUlasanModal({ open: false, pesananId: "" });
-    setKritik("");
-    setSaran("");
-    alert("Terima kasih atas ulasan dan kritik saran Anda!");
+  const handleSimpanUlasan = async () => {
+    if (!kritik && !saran) {
+      alert("Mohon masukkan kritik atau saran Anda.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/ulasan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_pesanan: ulasanModal.pesananId,
+          kritik_pelanggan: kritik,
+          saran_pelanggan: saran,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Gagal mengirimkan ulasan.");
+        return;
+      }
+
+      setUlasanModal({ open: false, pesananId: "" });
+      setKritik("");
+      setSaran("");
+      setRefreshKey((k) => k + 1);
+      alert("Terima kasih atas ulasan dan masukan Anda untuk Toko Donat Habil!");
+    } catch {
+      alert("Terjadi kesalahan jaringan saat mengirim ulasan.");
+    }
   };
 
   const filteredMenu = menuList.filter((m) => {
@@ -551,15 +712,25 @@ export default function PelangganPage() {
                       type="file"
                       accept="image/*"
                       onChange={(e) => {
-                        if (e.target.files?.[0]) {
-                          setBuktiBayar(e.target.files[0].name);
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          if (file.size > 500 * 1024) {
+                            alert("Ukuran bukti pembayaran maksimal 500 KB.");
+                            return;
+                          }
+                          setBuktiFileName(file.name);
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setBuktiBayar(reader.result as string);
+                          };
+                          reader.readAsDataURL(file);
                         }
                       }}
                       className="text-xs text-[#6D5D55] file:mr-2 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#F8A106] file:text-white hover:file:bg-[#E69300]"
                     />
-                    {buktiBayar && (
+                    {buktiFileName && (
                       <p className="text-[10px] text-green-700 font-bold mt-1">
-                        ✓ Terlampir: {buktiBayar}
+                        ✓ Terlampir: {buktiFileName}
                       </p>
                     )}
                   </div>
@@ -573,9 +744,10 @@ export default function PelangganPage() {
 
             <button
               onClick={handleKirimPesanan}
-              className="w-full py-3 bg-[#F8A106] hover:bg-[#E69300] text-white font-bold rounded-2xl shadow-md transition text-xs tracking-wider"
+              disabled={loading}
+              className="w-full py-3 bg-[#F8A106] hover:bg-[#E69300] disabled:opacity-60 text-white font-bold rounded-2xl shadow-md transition text-xs tracking-wider"
             >
-              KONFIRMASI &amp; BUAT PESANAN
+              {loading ? "Memproses Pesanan..." : "KONFIRMASI & BUAT PESANAN"}
             </button>
           </div>
         </div>

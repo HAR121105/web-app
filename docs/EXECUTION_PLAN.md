@@ -22,12 +22,12 @@ Dokumen ini memetakan seluruh tahapan pengerjaan Fase 0 hingga Fase 9 untuk peny
   - [x] `app/api/auth/me/route.ts` & `app/api/auth/logout/route.ts`
   - [x] `proxy.ts`: Proteksi rute per role (`/pelanggan`, `/kasir`, `/kitchen`, `/owner`)
   - [x] Hubungkan `app/login/page.tsx` & `app/register/page.tsx` ke API, tambah tombol logout di semua dashboard
-- [ ] **Fase 3: UC1 Pelanggan (Pemesanan, Pembayaran, Status, Ulasan)**
-  - [ ] `GET /api/menu`: Daftar menu + status ketersediaan stok
-  - [ ] `POST /api/pesanan`: Checkout pesanan, detail_pesanan, transaksi, dan riwayat dalam satu `prisma.$transaction`
-  - [ ] `GET /api/pesanan`: Riwayat pesanan milik pelanggan sendiri
-  - [ ] `POST /api/ulasan`: Form feedback ulasan setelah pesanan selesai
-  - [ ] Hubungkan `app/pelanggan/page.tsx` ke API dengan state loading & error
+- [x] **Fase 3: UC1 Pelanggan (Pemesanan, Pembayaran, Status, Ulasan)**
+  - [x] `GET /api/menu`: Daftar menu + status ketersediaan stok
+  - [x] `POST /api/pesanan`: Checkout pesanan, detail_pesanan, transaksi, dan riwayat dalam satu `prisma.$transaction`
+  - [x] `GET /api/pesanan`: Riwayat pesanan milik pelanggan sendiri
+  - [x] `POST /api/ulasan`: Form feedback ulasan setelah pesanan selesai
+  - [x] Hubungkan `app/pelanggan/page.tsx` ke API dengan state loading & error
 - [ ] **Fase 4: UC2 Kasir (Validasi Pembayaran, Serahkan Pesanan, Cetak Struk, Rekap)**
   - [ ] `GET /api/kasir/pesanan`: Mengambil semua pesanan masuk (dengan filter status)
   - [ ] `PATCH /api/transaksi/[id]`: Aksi validasi bayar (`valid` / `tidak_valid`) & teruskan ke kitchen
