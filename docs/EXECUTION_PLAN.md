@@ -48,9 +48,9 @@ Dokumen ini memetakan seluruh tahapan pengerjaan Fase 0 hingga Fase 9 untuk peny
   - [x] Skrip `scripts/verify-access.mjs` menguji kepatuhan Permission Matrix
   - [x] Dokumen Black Box Testing `docs/test-case.md` (minimal 25 test case)
   - [x] Uji fungsional end-to-end (Pelanggan -> Kasir -> Kitchen -> Kasir -> Ulasan -> Owner)
-- [ ] **Fase 8: Pembaruan Dokumentasi AGENTS.md**
-  - [ ] Catat prompt CFC untuk semua fase
-  - [ ] Struktur API & Business Rules
+- [x] **Fase 8: Pembaruan Dokumentasi AGENTS.md**
+  - [x] Catat prompt CFC untuk semua fase
+  - [x] Struktur API & Business Rules
 - [ ] **Fase 9: Persiapan Deployment Neon & Vercel**
   - [ ] `db/seed.sql` khusus seeding database cloud Neon
   - [ ] Pastikan `lib/prisma.ts` kompatibel SSL Neon
