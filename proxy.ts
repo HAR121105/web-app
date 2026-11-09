@@ -4,8 +4,14 @@ import { SESSION_COOKIE_NAME, verifySessionToken } from "./lib/session";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  const session = await verifySessionToken(token);
+  let session = null;
+  try {
+    const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+    session = await verifySessionToken(token);
+  } catch {
+    // Fail-closed: jika env SESSION_SECRET tidak ada atau verifikasi error, anggap tidak login
+    session = null;
+  }
 
   // Daftar rute terproteksi beserta role yang berhak
   const protectedRoutes: { prefix: string; role: string }[] = [

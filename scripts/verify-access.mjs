@@ -4,14 +4,17 @@
  * Menguji algoritma HMAC-SHA256 session token dan aturan hak akses multi-role (RBAC).
  */
 
-const SESSION_SECRET =
-  process.env.SESSION_SECRET || "donat-habil-default-secret-key-modul-4-lsik-2026-unand";
-
 async function getCryptoKey() {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret || secret.trim().length < 32) {
+    throw new Error(
+      "SESSION_SECRET wajib dikonfigurasi pada environment variables dan memiliki panjang minimal 32 karakter."
+    );
+  }
   const enc = new TextEncoder();
   return crypto.subtle.importKey(
     "raw",
-    enc.encode(SESSION_SECRET),
+    enc.encode(secret),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign", "verify"]

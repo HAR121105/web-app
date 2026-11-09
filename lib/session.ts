@@ -14,14 +14,18 @@ export interface SessionUser {
 export const SESSION_COOKIE_NAME = "donat_session";
 export const SESSION_MAX_AGE_SECONDS = 8 * 60 * 60; // 8 jam
 
-const SESSION_SECRET =
-  process.env.SESSION_SECRET || "donat-habil-default-secret-key-modul-4-lsik-2026-unand";
-
 async function getCryptoKey() {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret || secret.trim().length < 32) {
+    throw new Error(
+      "SESSION_SECRET wajib dikonfigurasi pada environment variables dan memiliki panjang minimal 32 karakter."
+    );
+  }
+
   const enc = new TextEncoder();
   return crypto.subtle.importKey(
     "raw",
-    enc.encode(SESSION_SECRET),
+    enc.encode(secret),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign", "verify"]
