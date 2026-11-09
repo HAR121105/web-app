@@ -23,10 +23,14 @@ export async function GET() {
     return NextResponse.json({
       menus: formattedMenus,
     });
-  } catch (error) {
-    console.error("GET /api/menu error:", error);
+  } catch (error: unknown) {
+    // Hindari log error koneksi saat Next.js pre-render build tanpa database aktif
+    const err = error as { code?: string };
+    if (err?.code !== "P1001") {
+      console.error("GET /api/menu error:", error);
+    }
     return NextResponse.json(
-      { error: "Gagal mengambil daftar menu donat." },
+      { error: "Gagal mengambil daftar menu donat.", menus: [] },
       { status: 500 }
     );
   }

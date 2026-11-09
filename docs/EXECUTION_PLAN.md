@@ -51,11 +51,11 @@ Dokumen ini memetakan seluruh tahapan pengerjaan Fase 0 hingga Fase 9 untuk peny
 - [x] **Fase 8: Pembaruan Dokumentasi AGENTS.md**
   - [x] Catat prompt CFC untuk semua fase
   - [x] Struktur API & Business Rules
-- [ ] **Fase 9: Persiapan Deployment Neon & Vercel**
-  - [ ] `db/seed.sql` khusus seeding database cloud Neon
-  - [ ] Pastikan `lib/prisma.ts` kompatibel SSL Neon
-  - [ ] Verifikasi `npm run build` bersih
-  - [ ] `docs/deployment.md` & `docs/RINGKASAN-IMPLEMENTASI.md`
+- [x] **Fase 9: Persiapan Deployment Neon & Vercel**
+  - [x] `db/seed.sql` khusus seeding database cloud Neon
+  - [x] Pastikan `lib/prisma.ts` kompatibel SSL Neon
+  - [x] Verifikasi `npm run build` bersih
+  - [x] `docs/deployment.md` & `docs/RINGKASAN-IMPLEMENTASI.md`
 
 ---
 
