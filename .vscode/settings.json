@@ -9,13 +9,18 @@
   "pgsql.connections": [
     {
       "server": "localhost",
-      "port": 5432,
+      "port": "5432",
       "database": "web_app",
       "userName": "habib",
       "authenticationType": "Password",
       "savePassword": true,
       "profileName": "web_app (Toko Donat Habil)",
-      "serverGroupId": "E0731148-1C3F-4822-ACA0-6F512CA2757B"
+      "serverGroupId": "E0731148-1C3F-4822-ACA0-6F512CA2757B",
+      "id": "17502BAF-7C28-4F6D-BEE5-7C5171BAD407",
+      "groupId": "E0731148-1C3F-4822-ACA0-6F512CA2757B",
+      "expiresOn": 0,
+      "password": "",
+      "sshPassword": ""
     }
   ]
 }
