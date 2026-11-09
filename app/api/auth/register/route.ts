@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { setSessionCookie } from "@/lib/session";
+import { generateId, withRetry } from "@/lib/id-generator";
 
 export async function POST(request: Request) {
   try {
@@ -66,52 +67,38 @@ export async function POST(request: Request) {
       }
     }
 
-    // Generate custom ID PLG###
-    const allPelanggan = await prisma.pelanggan.findMany({
-      select: { id_pelanggan: true },
-    });
-
-    let nextNumber = 1;
-    for (const p of allPelanggan) {
-      const match = p.id_pelanggan.match(/^PLG(\d+)$/i);
-      if (match) {
-        const num = parseInt(match[1], 10);
-        if (num >= nextNumber) {
-          nextNumber = num + 1;
-        }
-      }
-    }
-    const newIdPelanggan = `PLG${String(nextNumber).padStart(3, "0")}`;
-
     // Hash password bcrypt salt 10
     const password_hash = await bcrypt.hash(String(password), 10);
-
     const parsedTglLahir = tanggal_lahir ? new Date(tanggal_lahir) : null;
 
-    // Transaksi pembuatan akun dan pelanggan
-    const result = await prisma.$transaction(async (tx) => {
-      const newAkun = await tx.akun.create({
-        data: {
-          username: cleanUsername,
-          password_hash,
-          role: "pelanggan",
-        },
-      });
+    // Transaksi pembuatan akun dan pelanggan dengan generateId di dalam tx dan retry P2002
+    const result = await withRetry(async () => {
+      return await prisma.$transaction(async (tx) => {
+        const newIdPelanggan = await generateId("PLG", tx);
 
-      const newPelanggan = await tx.pelanggan.create({
-        data: {
-          id_pelanggan: newIdPelanggan,
-          id_akun: newAkun.id_akun,
-          nama: cleanNama,
-          email: email ? String(email).trim() : null,
-          no_telepon: no_telepon ? String(no_telepon).trim() : null,
-          alamat: alamat ? String(alamat).trim() : null,
-          tanggal_lahir: parsedTglLahir,
-          kode_pos: kode_pos ? String(kode_pos).trim() : null,
-        },
-      });
+        const newAkun = await tx.akun.create({
+          data: {
+            username: cleanUsername,
+            password_hash,
+            role: "pelanggan",
+          },
+        });
 
-      return { akun: newAkun, pelanggan: newPelanggan };
+        const newPelanggan = await tx.pelanggan.create({
+          data: {
+            id_pelanggan: newIdPelanggan,
+            id_akun: newAkun.id_akun,
+            nama: cleanNama,
+            email: email ? String(email).trim() : null,
+            no_telepon: no_telepon ? String(no_telepon).trim() : null,
+            alamat: alamat ? String(alamat).trim() : null,
+            tanggal_lahir: parsedTglLahir,
+            kode_pos: kode_pos ? String(kode_pos).trim() : null,
+          },
+        });
+
+        return { akun: newAkun, pelanggan: newPelanggan };
+      });
     });
 
     // Otomatis buat sesi cookie setelah registrasi sukses

@@ -245,10 +245,8 @@ export default function PelangganPage() {
     if (cart.length === 0) return;
 
     if (metodeBayar === "QRIS" && !buktiBayar) {
-      const confirmNoProof = window.confirm(
-        "Anda belum melampirkan bukti pembayaran QRIS. Tetap ingin membuat pesanan dan mengunggahnya nanti?"
-      );
-      if (!confirmNoProof) return;
+      alert("Bukti pembayaran QRIS wajib diunggah sebelum membuat pesanan.");
+      return;
     }
 
     setLoading(true);
@@ -710,12 +708,19 @@ export default function PelangganPage() {
                     </label>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/png, image/jpeg, image/jpg"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) {
+                          const validTypes = ["image/png", "image/jpeg", "image/jpg"];
+                          if (!validTypes.includes(file.type)) {
+                            alert("Format bukti pembayaran harus berupa gambar PNG atau JPEG.");
+                            e.target.value = "";
+                            return;
+                          }
                           if (file.size > 500 * 1024) {
                             alert("Ukuran bukti pembayaran maksimal 500 KB.");
+                            e.target.value = "";
                             return;
                           }
                           setBuktiFileName(file.name);
@@ -742,10 +747,16 @@ export default function PelangganPage() {
               )}
             </div>
 
+            {metodeBayar === "QRIS" && !buktiBayar && (
+              <p className="text-[11px] text-amber-700 text-center font-semibold">
+                ⚠️ Unggah bukti pembayaran QRIS untuk mengonfirmasi pesanan.
+              </p>
+            )}
+
             <button
               onClick={handleKirimPesanan}
-              disabled={loading}
-              className="w-full py-3 bg-[#F8A106] hover:bg-[#E69300] disabled:opacity-60 text-white font-bold rounded-2xl shadow-md transition text-xs tracking-wider"
+              disabled={loading || (metodeBayar === "QRIS" && !buktiBayar)}
+              className="w-full py-3 bg-[#F8A106] hover:bg-[#E69300] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-2xl shadow-md transition text-xs tracking-wider"
             >
               {loading ? "Memproses Pesanan..." : "KONFIRMASI & BUAT PESANAN"}
             </button>

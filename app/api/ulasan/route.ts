@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
-import { generateId } from "@/lib/id-generator";
+import { generateId, withRetry } from "@/lib/id-generator";
 
 export async function POST(request: Request) {
   const { session, errorResponse } = await requireAuth("pelanggan");
@@ -58,15 +58,19 @@ export async function POST(request: Request) {
       );
     }
 
-    const newIdUlasan = await generateId("ULS");
+    const ulasan = await withRetry(async () => {
+      return await prisma.$transaction(async (tx) => {
+        const newIdUlasan = await generateId("ULS", tx);
 
-    const ulasan = await prisma.ulasan.create({
-      data: {
-        id_ulasan: newIdUlasan,
-        id_pesanan,
-        kritik_pelanggan: kritik_pelanggan ? String(kritik_pelanggan).trim() : null,
-        saran_pelanggan: saran_pelanggan ? String(saran_pelanggan).trim() : null,
-      },
+        return await tx.ulasan.create({
+          data: {
+            id_ulasan: newIdUlasan,
+            id_pesanan,
+            kritik_pelanggan: kritik_pelanggan ? String(kritik_pelanggan).trim() : null,
+            saran_pelanggan: saran_pelanggan ? String(saran_pelanggan).trim() : null,
+          },
+        });
+      });
     });
 
     return NextResponse.json(

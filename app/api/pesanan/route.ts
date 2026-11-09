@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
-import { generateId } from "@/lib/id-generator";
+import { generateId, withRetry } from "@/lib/id-generator";
 
 export async function GET() {
   const { session, errorResponse } = await requireAuth("pelanggan");
@@ -40,9 +40,9 @@ export async function GET() {
   }
 }
 
-interface OrderItemInput {
-  id_menu: string;
-  jumlah: number;
+interface RawOrderItemInput {
+  id_menu?: unknown;
+  jumlah?: unknown;
 }
 
 export async function POST(request: Request) {
@@ -67,18 +67,94 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validasi ukuran bukti pembayaran (maks 500 KB ~ 700.000 karakter Base64)
-    if (bukti_pembayaran && typeof bukti_pembayaran === "string") {
-      if (bukti_pembayaran.length > 700000) {
+    // Validasi bukti pembayaran
+    let verifiedBukti: string | null = null;
+    if (metode_pembayaran === "QRIS") {
+      if (!bukti_pembayaran || typeof bukti_pembayaran !== "string") {
+        return NextResponse.json(
+          { error: "Bukti pembayaran QRIS wajib diunggah." },
+          { status: 400 }
+        );
+      }
+
+      const match = bukti_pembayaran.match(/^data:image\/(png|jpeg|jpg);base64,(.+)$/);
+      if (!match) {
+        return NextResponse.json(
+          {
+            error:
+              "Format bukti pembayaran tidak valid (harus berupa data URL gambar PNG atau JPEG).",
+          },
+          { status: 400 }
+        );
+      }
+
+      const base64Data = match[2];
+      const buffer = Buffer.from(base64Data, "base64");
+      if (buffer.length === 0) {
+        return NextResponse.json(
+          { error: "Bukti pembayaran tidak boleh kosong." },
+          { status: 400 }
+        );
+      }
+
+      if (buffer.length > 500 * 1024) {
         return NextResponse.json(
           { error: "Ukuran bukti pembayaran terlalu besar (maksimal 500 KB)." },
           { status: 400 }
         );
       }
+
+      verifiedBukti = bukti_pembayaran;
+    } else {
+      // Tunai: bukti diabaikan/ditolak (simpan null)
+      verifiedBukti = null;
+    }
+
+    // Validasi & hardening items: gabungkan duplikat id_menu, validasi bilangan bulat 1..99
+    const mergedMap = new Map<string, number>();
+
+    for (const rawItem of items as RawOrderItemInput[]) {
+      if (!rawItem || typeof rawItem.id_menu !== "string" || !rawItem.id_menu.trim()) {
+        return NextResponse.json(
+          { error: "ID menu tidak valid pada salah satu item pesanan." },
+          { status: 400 }
+        );
+      }
+
+      const idMenu = rawItem.id_menu.trim();
+      const qtyNum = Number(rawItem.jumlah);
+
+      if (!Number.isInteger(qtyNum) || qtyNum < 1 || qtyNum > 99) {
+        return NextResponse.json(
+          {
+            error: `Jumlah pesanan harus bilangan bulat antara 1 dan 99 (item: ${idMenu}).`,
+          },
+          { status: 400 }
+        );
+      }
+
+      const current = mergedMap.get(idMenu) ?? 0;
+      const nextTotal = current + qtyNum;
+      if (nextTotal > 99) {
+        return NextResponse.json(
+          {
+            error: `Total jumlah pesanan untuk menu ${idMenu} melebihi batas maksimal (99 buah).`,
+          },
+          { status: 400 }
+        );
+      }
+      mergedMap.set(idMenu, nextTotal);
+    }
+
+    if (mergedMap.size === 0) {
+      return NextResponse.json(
+        { error: "Daftar pesanan tidak boleh kosong." },
+        { status: 400 }
+      );
     }
 
     // Ambil data menu dan persediaan dari database untuk validasi harga & stok
-    const menuIds = items.map((i: OrderItemInput) => i.id_menu);
+    const menuIds = Array.from(mergedMap.keys());
     const dbMenus = await prisma.menu.findMany({
       where: { id_menu: { in: menuIds } },
       include: { persediaan: true },
@@ -94,19 +170,11 @@ export async function POST(request: Request) {
       subtotal: number;
     }[] = [];
 
-    for (const item of items as OrderItemInput[]) {
-      const menu = menuMap.get(item.id_menu);
+    for (const [idMenu, jumlah] of mergedMap.entries()) {
+      const menu = menuMap.get(idMenu);
       if (!menu) {
         return NextResponse.json(
-          { error: `Menu dengan ID ${item.id_menu} tidak ditemukan.` },
-          { status: 400 }
-        );
-      }
-
-      const jumlah = Number(item.jumlah);
-      if (isNaN(jumlah) || jumlah <= 0) {
-        return NextResponse.json(
-          { error: `Jumlah pesanan untuk ${menu.nama_menu} tidak valid.` },
+          { error: `Menu dengan ID ${idMenu} tidak ditemukan.` },
           { status: 400 }
         );
       }
@@ -127,64 +195,66 @@ export async function POST(request: Request) {
       totalTransaksi += subtotal;
 
       detailToCreate.push({
-        id_menu: item.id_menu,
+        id_menu: idMenu,
         jumlah_pesanan: jumlah,
         harga_satuan: hargaSatuan,
         subtotal,
       });
     }
 
-    const newIdPesanan = await generateId("PSN");
-    const newIdTransaksi = await generateId("TRX");
-    const now = new Date();
+    // Jalankan seluruh mutasi tabel dalam transaksi atomik dengan generateId di dalam tx dan retry P2002
+    const result = await withRetry(async () => {
+      return await prisma.$transaction(async (tx) => {
+        const newIdPesanan = await generateId("PSN", tx);
+        const newIdTransaksi = await generateId("TRX", tx);
+        const now = new Date();
 
-    // Jalankan seluruh mutasi tabel dalam satu transaksi atomik
-    const result = await prisma.$transaction(async (tx) => {
-      // 1. Buat pesanan
-      const pesanan = await tx.pesanan.create({
-        data: {
-          id_pesanan: newIdPesanan,
-          id_pelanggan: session.ref_id,
-          status_pesanan: "Menunggu Validasi",
-          tanggal_pesanan: now,
-          waktu_pesanan: now,
-        },
+        // 1. Buat pesanan
+        const pesanan = await tx.pesanan.create({
+          data: {
+            id_pesanan: newIdPesanan,
+            id_pelanggan: session.ref_id,
+            status_pesanan: "Menunggu Validasi",
+            tanggal_pesanan: now,
+            waktu_pesanan: now,
+          },
+        });
+
+        // 2. Buat detail_pesanan
+        await tx.detail_pesanan.createMany({
+          data: detailToCreate.map((d) => ({
+            id_pesanan: newIdPesanan,
+            id_menu: d.id_menu,
+            jumlah_pesanan: d.jumlah_pesanan,
+            harga_satuan: d.harga_satuan,
+            subtotal: d.subtotal,
+          })),
+        });
+
+        // 3. Buat transaksi
+        const transaksi = await tx.transaksi.create({
+          data: {
+            id_transaksi: newIdTransaksi,
+            id_pesanan: newIdPesanan,
+            total_transaksi: totalTransaksi,
+            metode_pembayaran,
+            status_pembayaran: "Menunggu Validasi",
+            bukti_pembayaran: verifiedBukti,
+            waktu_transaksi: now,
+          },
+        });
+
+        // 4. Catat riwayat status pesanan
+        await tx.riwayat_status_pesanan.create({
+          data: {
+            id_pesanan: newIdPesanan,
+            status_pesanan: "Menunggu Validasi",
+            waktu_update: now,
+          },
+        });
+
+        return { pesanan, transaksi };
       });
-
-      // 2. Buat detail_pesanan
-      await tx.detail_pesanan.createMany({
-        data: detailToCreate.map((d) => ({
-          id_pesanan: newIdPesanan,
-          id_menu: d.id_menu,
-          jumlah_pesanan: d.jumlah_pesanan,
-          harga_satuan: d.harga_satuan,
-          subtotal: d.subtotal,
-        })),
-      });
-
-      // 3. Buat transaksi
-      const transaksi = await tx.transaksi.create({
-        data: {
-          id_transaksi: newIdTransaksi,
-          id_pesanan: newIdPesanan,
-          total_transaksi: totalTransaksi,
-          metode_pembayaran,
-          status_pembayaran: "Menunggu Validasi",
-          bukti_pembayaran: bukti_pembayaran || null,
-          waktu_transaksi: now,
-        },
-      });
-
-      // 4. Catat riwayat status pesanan
-      await tx.riwayat_status_pesanan.create({
-        data: {
-          id_pesanan: newIdPesanan,
-          status_pesanan: "Menunggu Validasi",
-          waktu_update: now,
-        },
-      });
-
-      return { pesanan, transaksi };
     });
 
     return NextResponse.json(
