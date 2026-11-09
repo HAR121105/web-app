@@ -23,8 +23,8 @@ Sistem ini menerapkan arsitektur **Role-Based Access Control (RBAC)** dengan 4 p
 - **Autentikasi & Keamanan**:
   - Hashing sandi menggunakan `bcryptjs` (salt rounds 10).
   - Manajemen sesi menggunakan token digital **HMAC-SHA256** pada cookie HTTP-only berdurasi 8 jam (`SameSite=Lax`, path `/`).
-  - Proteksi navigasi halaman multi-role menggunakan konvensi Next.js 16 [`proxy.ts`](file:///home/habib/Projects/web-app/proxy.ts).
-  - Helper otorisasi sisi server [`lib/auth.ts`](file:///home/habib/Projects/web-app/lib/auth.ts) pada setiap endpoint API.
+  - Proteksi navigasi halaman multi-role menggunakan konvensi Next.js 16 [`proxy.ts`](../proxy.ts).
+  - Helper otorisasi sisi server [`lib/auth.ts`](../lib/auth.ts) pada setiap endpoint API.
 - **Desain Antarmuka**: 100% patuh pada prototype Figma UI Design 5C (`caQFfrAJEQnq4kpMGPWs3Y`) dengan token palet warna:
   - Warm Amber: `#F8A106`
   - Chocolate Brown: `#3C2923`
@@ -34,7 +34,7 @@ Sistem ini menerapkan arsitektur **Role-Based Access Control (RBAC)** dengan 4 p
 
 ## 3. Skema Basis Data 3NF (12 Tabel)
 
-Basis data telah memenuhi bentuk normal ketiga (3NF) sesuai *Final ERD* dengan sumber kebenaran pada file [`db/schema.sql`](file:///home/habib/Projects/web-app/db/schema.sql):
+Basis data telah memenuhi bentuk normal ketiga (3NF) sesuai *Final ERD* dengan sumber kebenaran pada file [`db/schema.sql`](../db/schema.sql):
 
 1. `akun`: Menyimpan kredensial (`id_akun`, `username`, `password_hash`, `role`).
 2. `pelanggan`: Profil pembeli donat (`id_pelanggan`, `id_akun`, `nama`, `tanggal_lahir`, `no_telepon`, `email`, `alamat`, `kode_pos`).
@@ -55,16 +55,16 @@ Basis data telah memenuhi bentuk normal ketiga (3NF) sesuai *Final ERD* dengan s
 
 | Fase | Deskripsi Pekerjaan | Hasil / Status |
 |---|---|---|
-| **Fase 0** | Audit repositori & penyusunan rencana eksekusi komprehensif | Dokumen [`docs/EXECUTION_PLAN.md`](file:///home/habib/Projects/web-app/docs/EXECUTION_PLAN.md) |
+| **Fase 0** | Audit repositori & penyusunan rencana eksekusi komprehensif | Dokumen [`docs/EXECUTION_PLAN.md`](./EXECUTION_PLAN.md) |
 | **Fase 1** | Pembersihan scaffold `User`, migrasi usang, pembuatan `.env.example`, README, dan script build | Commit `49b83e6` |
 | **Fase 2** | Autentikasi session cookie HMAC-SHA256, registrasi pelanggan, dan proteksi rute `proxy.ts` | Commit `d64aa48` |
 | **Fase 3** | Implementasi UC1 Pelanggan (katalog donat, pesanan QRIS/Tunai, upload bukti, ulasan) | Commit `8897e32` |
 | **Fase 4** | Implementasi UC2 Kasir (validasi bayar, serahkan pesanan, cetak struk, rekapitulasi shift) | Commit `425d120` |
 | **Fase 5** | Implementasi UC3 Kitchen (antrean masak FIFO, estimasi waktu, siap diambil + potong stok otomatis, kelola persediaan) | Commit `0697829` |
 | **Fase 6** | Fitur pendukung Owner (laporan omzet, pesanan terlaris, filter periode, kritik saran) | Commit `30cf3b5` |
-| **Fase 7** | Skrip verifikasi akses [`scripts/verify-access.mjs`](file:///home/habib/Projects/web-app/scripts/verify-access.mjs) & Black Box Testing [`docs/test-case.md`](file:///home/habib/Projects/web-app/docs/test-case.md) (29 skenario) | Commit `dc9f2e3` |
-| **Fase 8** | Pembaruan catatan prompt CFC dan dokumentasi arsitektur di [`AGENTS.md`](file:///home/habib/Projects/web-app/AGENTS.md) | Commit `f163b44` |
-| **Fase 9** | Skrip seed cloud [`db/seed.sql`](file:///home/habib/Projects/web-app/db/seed.sql), panduan deployment [`docs/deployment.md`](file:///home/habib/Projects/web-app/docs/deployment.md), dan verifikasi build produksi bersih | Selesai |
+| **Fase 7** | Skrip verifikasi akses [`scripts/verify-access.mjs`](../scripts/verify-access.mjs) & Black Box Testing [`docs/test-case.md`](./test-case.md) (30 skenario) | Selesai |
+| **Fase 8** | Pembaruan catatan prompt CFC dan dokumentasi arsitektur di [`AGENTS.md`](../AGENTS.md) | Selesai |
+| **Fase 9** | Skrip seed cloud [`db/seed.sql`](../db/seed.sql), panduan deployment [`docs/deployment.md`](./deployment.md), dan verifikasi build produksi bersih | Selesai |
 
 ---
 

@@ -15,7 +15,7 @@ Dokumen ini memetakan seluruh tahapan pengerjaan Fase 0 hingga Fase 9 untuk peny
   - [x] Perbarui `package.json` build script: `"prisma generate && next build"`
   - [x] Ganti `README.md` dengan dokumentasi resmi proyek dalam bahasa Indonesia
 - [x] **Fase 2: Autentikasi Nyata & Otorisasi Role (RBAC)**
-  - [x] `lib/session.ts`: Session cookie HMAC-SHA256 (node:crypto, httpOnly, sameSite lax, 8 jam)
+  - [x] `lib/session.ts`: Session cookie HMAC-SHA256 (WebCrypto `crypto.subtle`, httpOnly, sameSite lax, 8 jam)
   - [x] `lib/auth.ts`: Helper `getSession()` dan `requireRole(...roles)`
   - [x] `app/api/auth/login/route.ts`: Login bcryptjs dengan verifikasi role database
   - [x] `app/api/auth/register/route.ts`: Registrasi khusus pelanggan dengan `prisma.$transaction`

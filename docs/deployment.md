@@ -1,6 +1,6 @@
 # Panduan Deployment Neon PostgreSQL & Vercel
 
-Dokumen ini memandu langkah demi langkah peluncuran (*deployment*) Sistem Informasi Penjualan Toko Donat Habil ke cloud platform **Neon** (Database) dan **Vercel** (Serverless Web App).
+Dokumen ini memandu langkah demi langkah peluncuran (*deployment*) Sistem Informasi Penjualan Toko Donat Habil ke cloud platform **Neon** (Database) dan **Vercel** (Serverless Web App) sesuai langkah 19 Modul Praktikum.
 
 ---
 
@@ -12,15 +12,28 @@ Dokumen ini memandu langkah demi langkah peluncuran (*deployment*) Sistem Inform
    ```text
    postgresql://[user]:[password]@[endpoint].neon.tech/neondb?sslmode=require
    ```
-4. Buka menu **SQL Editor** pada dashboard Neon, buka file [`db/schema.sql`](file:///home/habib/Projects/web-app/db/schema.sql) dari repositori ini, salin seluruh isi DDL (bagian pembuatan 12 tabel), lalu klik **Run**.
-5. Buka file [`db/seed.sql`](file:///home/habib/Projects/web-app/db/seed.sql), salin seluruh isi query INSERT, lalu klik **Run** di SQL Editor Neon untuk mengisi data awal (akun demo, menu, persediaan).
+4. **Push Skema Database Menggunakan Prisma CLI**:
+   - Isi `DATABASE_URL` dengan connection string Neon pada file `.env` lokal Anda.
+   - Jalankan perintah berikut di terminal:
+     ```bash
+     npx prisma db push
+     ```
+   - Prisma akan secara otomatis membuat 12 tabel sesuai dengan `schema.prisma`.
+5. **Isi Data Awal (Seed Data)**:
+   - Buka menu **SQL Editor** pada dashboard Neon.
+   - Buka file [`db/seed.sql`](../db/seed.sql), salin seluruh isi query INSERT, lalu klik **Run** di SQL Editor Neon untuk mengisi data awal (akun pengguna ber-hash bcrypt kuat, data profil, menu donat, dan stok awal).
+6. **Terapkan CHECK Constraint (Disarankan)**:
+   - Buka file [`db/checks.sql`](../db/checks.sql), salin query constraint, lalu jalankan di SQL Editor Neon. Ini menambahkan validasi integritas tingkat database (seperti role enum, batas harga/stok positif, dan status pesanan) yang tidak dibuat secara native oleh `prisma db push`.
+
+> [!WARNING]
+> **Penting Mengenai Keamanan Kredensial**: Password lama yang pernah tercatat di riwayat awal git TIDAK BOLEH dipakai di lingkungan produksi Neon. Gunakan password acak baru yang dibangkitkan saat mengeksekusi seed produksi.
 
 ---
 
 ## 2. Setup Deployment di Vercel
 
 1. Kunjungi [vercel.com](https://vercel.com) dan login dengan akun GitHub Anda.
-2. Klik **Add New...** > **Project**, lalu pilih repositori `web-app` (atau nama repositori yang Anda gunakan).
+2. Klik **Add New...** > **Project**, lalu pilih repositori `web-app`.
 3. Pada pengaturan konfigurasi proyek:
    - **Framework Preset**: `Next.js`
    - **Root Directory**: `./`
@@ -31,7 +44,7 @@ Dokumen ini memandu langkah demi langkah peluncuran (*deployment*) Sistem Inform
 | Key | Value / Contoh | Deskripsi |
 |---|---|---|
 | `DATABASE_URL` | `postgresql://...neon.tech/neondb?sslmode=require` | Connection string PostgreSQL Neon Anda |
-| `SESSION_SECRET` | *(hasil generate string acak min 32 char)* | Kunci HMAC-SHA256 penandatangan cookie sesi |
+| `SESSION_SECRET` | *(string acak minimal 32 karakter)* | Kunci HMAC-SHA256 penandatangan cookie sesi |
 
 > [!TIP]
 > Anda dapat menghasilkan `SESSION_SECRET` yang aman melalui terminal dengan menjalankan:
@@ -41,9 +54,6 @@ Dokumen ini memandu langkah demi langkah peluncuran (*deployment*) Sistem Inform
 
 5. Klik tombol **Deploy**.
 6. Tunggu proses build selesai (~1-2 menit). Vercel akan memberikan domain aktif (misal: `https://web-app-xxxx.vercel.app`).
-
-> [!WARNING]
-> **Penting Mengenai Keamanan Kredensial**: Password lama yang pernah tercatat di riwayat awal git TIDAK BOLEH dipakai di lingkungan produksi Neon. Gunakan password baru yang dibangkitkan secara acak saat menjalankan seed produksi.
 
 ---
 
