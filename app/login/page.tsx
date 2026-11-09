@@ -18,32 +18,46 @@ export default function LoginPage() {
     setRole(r);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!username || !password) {
+      setError("Silakan masukkan username dan password!");
+      return;
+    }
+
     setLoading(true);
 
-    // Simulasi autentikasi frontend prototype
-    setTimeout(() => {
-      setLoading(false);
-      if (!username || !password) {
-        setError("Silakan masukkan username dan password!");
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password, role }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Gagal masuk ke sistem.");
+        setLoading(false);
         return;
       }
 
-      // Simpan session simulasi ke localStorage
+      // Simpan info user untuk kemudahan UI
       if (typeof window !== "undefined") {
-        localStorage.setItem(
-          "user_session",
-          JSON.stringify({ username, role, isLoggedIn: true })
-        );
+        localStorage.setItem("user_session", JSON.stringify(data.user));
       }
 
-      if (role === "kasir") router.push("/kasir");
-      else if (role === "kitchen") router.push("/kitchen");
-      else if (role === "owner") router.push("/owner");
+      const targetRole = data.user.role;
+      if (targetRole === "kasir") router.push("/kasir");
+      else if (targetRole === "kitchen") router.push("/kitchen");
+      else if (targetRole === "owner") router.push("/owner");
       else router.push("/pelanggan");
-    }, 600);
+    } catch {
+      setError("Terjadi kesalahan jaringan. Pastikan server aktif.");
+      setLoading(false);
+    }
   };
 
   return (

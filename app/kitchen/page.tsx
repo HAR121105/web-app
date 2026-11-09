@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
+import { logoutClient } from "@/lib/client-auth";
 
 interface AntreanDapur {
   id: string;
@@ -134,12 +134,12 @@ export default function KitchenPage() {
               <span className="font-bold text-[#3C2923] block">Chef Daniel</span>
               <span className="text-[10px] text-green-700 font-bold">Dapur Standby</span>
             </div>
-            <Link
-              href="/login"
+            <button
+              onClick={() => logoutClient()}
               className="px-3 py-1.5 rounded-xl border border-[#EADBCC] text-xs font-bold text-[#8C6D58] hover:bg-[#FAF4ED]"
             >
               Keluar
-            </Link>
+            </button>
           </div>
         </div>
       </header>

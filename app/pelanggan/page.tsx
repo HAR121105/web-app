@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { logoutClient } from "@/lib/client-auth";
 
 interface CartItem {
   id: string;
@@ -213,12 +214,12 @@ export default function PelangganPage() {
                 </span>
               )}
             </button>
-            <Link
-              href="/login"
+            <button
+              onClick={() => logoutClient()}
               className="text-xs font-semibold text-[#8C6D58] hover:text-[#3C2923] px-2 py-1"
             >
               Keluar
-            </Link>
+            </button>
           </div>
         </div>
       </header>

@@ -14,14 +14,14 @@ Dokumen ini memetakan seluruh tahapan pengerjaan Fase 0 hingga Fase 9 untuk peny
   - [x] Buat file `.env.example`
   - [x] Perbarui `package.json` build script: `"prisma generate && next build"`
   - [x] Ganti `README.md` dengan dokumentasi resmi proyek dalam bahasa Indonesia
-- [ ] **Fase 2: Autentikasi Nyata & Otorisasi Role (RBAC)**
-  - [ ] `lib/session.ts`: Session cookie HMAC-SHA256 (node:crypto, httpOnly, sameSite lax, 8 jam)
-  - [ ] `lib/auth.ts`: Helper `getSession()` dan `requireRole(...roles)`
-  - [ ] `app/api/auth/login/route.ts`: Login bcryptjs dengan verifikasi role database
-  - [ ] `app/api/auth/register/route.ts`: Registrasi khusus pelanggan dengan `prisma.$transaction`
-  - [ ] `app/api/auth/me/route.ts` & `app/api/auth/logout/route.ts`
-  - [ ] `middleware.ts`: Proteksi rute per role (`/pelanggan`, `/kasir`, `/kitchen`, `/owner`)
-  - [ ] Hubungkan `app/login/page.tsx` & `app/register/page.tsx` ke API, tambah tombol logout di semua dashboard
+- [x] **Fase 2: Autentikasi Nyata & Otorisasi Role (RBAC)**
+  - [x] `lib/session.ts`: Session cookie HMAC-SHA256 (node:crypto, httpOnly, sameSite lax, 8 jam)
+  - [x] `lib/auth.ts`: Helper `getSession()` dan `requireRole(...roles)`
+  - [x] `app/api/auth/login/route.ts`: Login bcryptjs dengan verifikasi role database
+  - [x] `app/api/auth/register/route.ts`: Registrasi khusus pelanggan dengan `prisma.$transaction`
+  - [x] `app/api/auth/me/route.ts` & `app/api/auth/logout/route.ts`
+  - [x] `proxy.ts`: Proteksi rute per role (`/pelanggan`, `/kasir`, `/kitchen`, `/owner`)
+  - [x] Hubungkan `app/login/page.tsx` & `app/register/page.tsx` ke API, tambah tombol logout di semua dashboard
 - [ ] **Fase 3: UC1 Pelanggan (Pemesanan, Pembayaran, Status, Ulasan)**
   - [ ] `GET /api/menu`: Daftar menu + status ketersediaan stok
   - [ ] `POST /api/pesanan`: Checkout pesanan, detail_pesanan, transaksi, dan riwayat dalam satu `prisma.$transaction`

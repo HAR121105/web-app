@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
+import { logoutClient } from "@/lib/client-auth";
 
 interface PesananKasir {
   id: string;
@@ -173,13 +173,13 @@ export default function KasirPage() {
               <div className="text-[10px] text-[#8C7A70]">Shift Pagi</div>
             </div>
           </div>
-          <Link
-            href="/login"
+          <button
+            onClick={() => logoutClient()}
             className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-[#EADBCC] text-xs font-bold text-[#8C6D58] hover:bg-[#FAF4ED] transition"
           >
             <span>🚪</span>
             <span>Keluar Sistem</span>
-          </Link>
+          </button>
         </div>
       </aside>
 

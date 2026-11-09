@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
+import { logoutClient } from "@/lib/client-auth";
 
 export default function OwnerPage() {
   const [periode, setPeriode] = useState<"hari_ini" | "minggu_ini" | "bulan_ini">("bulan_ini");
@@ -98,12 +98,12 @@ export default function OwnerPage() {
               <span className="font-bold text-[#3C2923] block">Habil (Owner)</span>
               <span className="text-[10px] text-[#8C7A70]">Toko Donat Habil</span>
             </div>
-            <Link
-              href="/login"
+            <button
+              onClick={() => logoutClient()}
               className="px-3 py-1.5 rounded-xl border border-[#EADBCC] text-xs font-bold text-[#8C6D58] hover:bg-[#FAF4ED]"
             >
               Keluar
-            </Link>
+            </button>
           </div>
         </div>
       </header>

@@ -18,22 +18,50 @@ export default function RegisterPage() {
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nama: form.nama,
+          username: form.username,
+          password: form.password,
+          email: form.email || null,
+          no_telepon: form.noTelepon || null,
+          alamat: form.alamat || null,
+          tanggal_lahir: form.tanggalLahir || null,
+          kode_pos: form.kodePos || null,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Gagal mendaftarkan akun.");
+        setLoading(false);
+        return;
+      }
+
       setLoading(false);
       setSuccess(true);
       setTimeout(() => {
-        router.push("/login");
-      }, 1500);
-    }, 600);
+        router.push("/pelanggan");
+      }, 1000);
+    } catch {
+      setError("Terjadi kesalahan jaringan saat mendaftar.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -51,9 +79,16 @@ export default function RegisterPage() {
           </p>
         </div>
 
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2">
+            <span>⚠️</span>
+            <span>{error}</span>
+          </div>
+        )}
+
         {success && (
           <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl text-xs font-semibold text-center">
-            Pendaftaran berhasil! Mengarahkan ke halaman login...
+            Pendaftaran berhasil! Mengarahkan ke menu donat...
           </div>
         )}
 
