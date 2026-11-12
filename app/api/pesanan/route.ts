@@ -179,6 +179,15 @@ export async function POST(request: Request) {
         );
       }
 
+      if (!menu.aktif) {
+        return NextResponse.json(
+          {
+            error: `Menu "${menu.nama_menu}" saat ini sedang tidak aktif dan tidak dapat dipesan.`,
+          },
+          { status: 400 }
+        );
+      }
+
       // Validasi ketersediaan stok
       const stokTersedia = menu.persediaan?.jumlah_persediaan ?? 0;
       if (jumlah > stokTersedia) {

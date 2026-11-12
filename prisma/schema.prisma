@@ -25,6 +25,7 @@ model menu {
   nama_menu      String           @db.VarChar(100)
   kategori_menu  String           @db.VarChar(50)
   harga_satuan   Int
+  aktif          Boolean          @default(true)
   detail_pesanan detail_pesanan[]
   persediaan     persediaan?
 }
@@ -135,6 +136,7 @@ model transaksi {
   bukti_pembayaran  String?
   kasir             kasir?   @relation(fields: [id_kasir], references: [id_kasir], onDelete: NoAction, onUpdate: NoAction)
   pesanan           pesanan  @relation(fields: [id_pesanan], references: [id_pesanan], onDelete: Cascade, onUpdate: NoAction)
+  rekap_dihapus     rekap_dihapus?
 }
 
 model ulasan {
@@ -143,4 +145,11 @@ model ulasan {
   kritik_pelanggan String?
   saran_pelanggan  String?
   pesanan          pesanan @relation(fields: [id_pesanan], references: [id_pesanan], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model rekap_dihapus {
+  id_transaksi String    @id @db.VarChar(10)
+  dihapus_pada DateTime  @default(now()) @db.Timestamp(6)
+  dihapus_oleh String?   @db.VarChar(50)
+  transaksi    transaksi @relation(fields: [id_transaksi], references: [id_transaksi], onDelete: Cascade, onUpdate: NoAction)
 }

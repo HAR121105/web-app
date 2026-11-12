@@ -47,18 +47,30 @@ INSERT INTO owner (id_owner, id_akun, nama_owner) VALUES
  ('OWN001', 9, 'Habil')
 ON CONFLICT (id_owner) DO NOTHING;
 
--- 6. Menu Donat
-INSERT INTO menu (id_menu, nama_menu, kategori_menu, harga_satuan) VALUES
- ('MNU001', 'Donat Gula Halus',    'Donat Klasik',  4000),
- ('MNU002', 'Donat Cokelat Meses', 'Donat Topping', 4000),
- ('MNU003', 'Donat Keju',          'Donat Topping', 5000)
+-- 6. Menu Donat (3 Menu Awal + 6 Menu Tambahan)
+INSERT INTO menu (id_menu, nama_menu, kategori_menu, harga_satuan, aktif) VALUES
+ ('MNU001', 'Donat Gula Halus',    'Donat Klasik',         4000, true),
+ ('MNU002', 'Donat Cokelat Meses', 'Donat Topping',        4000, true),
+ ('MNU003', 'Donat Keju',          'Donat Topping',        5000, true),
+ ('MNU004', 'Donat Tiramisu',      'Donat Topping',        5000, true),
+ ('MNU005', 'Donat Matcha',        'Donat Topping',        5000, true),
+ ('MNU006', 'Donat Red Velvet',    'Donat Topping',        5000, true),
+ ('MNU007', 'Choco Oreo',          'Donat Topping Double', 6000, true),
+ ('MNU008', 'Cokelat Keju',        'Donat Topping Double', 6000, true),
+ ('MNU009', 'Nut and Choco',       'Donat Topping Double', 6000, true)
 ON CONFLICT (id_menu) DO NOTHING;
 
 -- 7. Persediaan Donat
 INSERT INTO persediaan (id_persediaan, id_menu, jumlah_persediaan) VALUES
  ('PRSD01', 'MNU001', 60),
  ('PRSD02', 'MNU002', 55),
- ('PRSD03', 'MNU003', 48)
+ ('PRSD03', 'MNU003', 48),
+ ('PRSD04', 'MNU004', 20),
+ ('PRSD05', 'MNU005', 20),
+ ('PRSD06', 'MNU006', 20),
+ ('PRSD07', 'MNU007', 20),
+ ('PRSD08', 'MNU008', 20),
+ ('PRSD09', 'MNU009', 20)
 ON CONFLICT (id_persediaan) DO NOTHING;
 
 -- 8. Pesanan Awal

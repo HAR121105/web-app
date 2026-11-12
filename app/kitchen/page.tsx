@@ -18,6 +18,8 @@ interface PersediaanItem {
   nama: string;
   stok: number;
   kategori: string;
+  harga: number;
+  aktif: boolean;
 }
 
 export default function KitchenPage() {
@@ -37,6 +39,29 @@ export default function KitchenPage() {
     pesananId: "",
   });
   const [inputEstimasi, setInputEstimasi] = useState("15");
+
+  // Modal Tambah Menu Baru (Bagian 1)
+  const [tambahModal, setTambahModal] = useState(false);
+  const [formMenu, setFormMenu] = useState({
+    nama_menu: "",
+    kategori_menu: "Donat Topping",
+    harga_satuan: "5000",
+    stok_awal: "20",
+  });
+  const [loadingTambah, setLoadingTambah] = useState(false);
+
+  // Modal Konfirmasi Hapus Menu (Bagian 1 - Soft Delete)
+  const [hapusModal, setHapusModal] = useState<{
+    open: boolean;
+    menuId: string;
+    namaMenu: string;
+    loading: boolean;
+  }>({
+    open: false,
+    menuId: "",
+    namaMenu: "",
+    loading: false,
+  });
 
   useEffect(() => {
     let isCancelled = false;
@@ -118,12 +143,16 @@ export default function KitchenPage() {
               nama_menu: string;
               kategori_menu: string;
               jumlah_persediaan: number;
+              harga_satuan?: number;
+              aktif?: boolean;
             }) => ({
               id: p.id_persediaan,
               menuId: p.id_menu,
               nama: p.nama_menu,
               kategori: p.kategori_menu,
               stok: p.jumlah_persediaan,
+              harga: p.harga_satuan ?? 0,
+              aktif: p.aktif ?? true,
             }));
             setPersediaan(mappedStok);
           }
@@ -207,6 +236,85 @@ export default function KitchenPage() {
       setRefreshKey((k) => k + 1);
     } catch {
       alert("Terjadi kesalahan jaringan saat memperbarui persediaan.");
+    }
+  };
+
+  const handleTambahMenu = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formMenu.nama_menu.trim()) {
+      alert("Mohon masukkan nama menu donat.");
+      return;
+    }
+    const harga = parseInt(formMenu.harga_satuan, 10);
+    if (isNaN(harga) || harga <= 0) {
+      alert("Harga satuan harus berupa angka lebih besar dari 0.");
+      return;
+    }
+    const stok = parseInt(formMenu.stok_awal, 10);
+    if (isNaN(stok) || stok < 0) {
+      alert("Stok awal harus berupa angka 0 atau lebih.");
+      return;
+    }
+
+    setLoadingTambah(true);
+    try {
+      const res = await fetch("/api/kitchen/menu", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nama_menu: formMenu.nama_menu.trim(),
+          kategori_menu: formMenu.kategori_menu.trim(),
+          harga_satuan: harga,
+          stok_awal: stok,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Gagal menambahkan menu baru.");
+        setLoadingTambah(false);
+        return;
+      }
+
+      alert(data.message || "Menu baru berhasil ditambahkan!");
+      setTambahModal(false);
+      setFormMenu({
+        nama_menu: "",
+        kategori_menu: "Donat Topping",
+        harga_satuan: "5000",
+        stok_awal: "20",
+      });
+      setRefreshKey((k) => k + 1);
+    } catch {
+      alert("Terjadi kesalahan jaringan saat menambahkan menu baru.");
+    } finally {
+      setLoadingTambah(false);
+    }
+  };
+
+  const handleHapusMenu = async () => {
+    if (!hapusModal.menuId) return;
+
+    setHapusModal((prev) => ({ ...prev, loading: true }));
+    try {
+      const res = await fetch(`/api/kitchen/menu/${hapusModal.menuId}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Gagal menonaktifkan menu.");
+        setHapusModal((prev) => ({ ...prev, loading: false }));
+        return;
+      }
+
+      alert(data.message || "Menu berhasil dinonaktifkan.");
+      setHapusModal({ open: false, menuId: "", namaMenu: "", loading: false });
+      setRefreshKey((k) => k + 1);
+    } catch {
+      alert("Terjadi kesalahan jaringan saat menghapus menu.");
+      setHapusModal((prev) => ({ ...prev, loading: false }));
     }
   };
 
@@ -386,32 +494,70 @@ export default function KitchenPage() {
         ) : (
           /* Tab Kelola Persediaan (Stok) */
           <div className="bg-white rounded-3xl p-6 border border-[#EFE5D8] shadow-sm space-y-6">
-            <div>
-              <h2 className="text-xl font-black text-[#3C2923]">
-                Kelola Ketersediaan Menu &amp; Stok Donat
-              </h2>
-              <p className="text-xs text-[#7A6B63] mt-1">
-                Kitchen berwenang memantau dan mengubah jumlah ketersediaan donat siap saji
-              </p>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-black text-[#3C2923]">
+                  Kelola Ketersediaan Menu &amp; Stok Donat
+                </h2>
+                <p className="text-xs text-[#7A6B63] mt-1">
+                  Kitchen berwenang memantau, menambah varian baru, mengubah stok, dan menonaktifkan menu
+                </p>
+              </div>
+
+              <button
+                onClick={() => setTambahModal(true)}
+                className="px-4 py-2.5 bg-gradient-to-r from-[#F8A106] to-[#DE7525] hover:from-[#E69300] hover:to-[#C6651E] text-white font-extrabold rounded-2xl text-xs shadow-md transition flex items-center gap-1.5"
+              >
+                <span>➕</span> Tambah Menu Baru
+              </button>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-xs text-left">
                 <thead className="bg-[#FAF4ED] text-[#77431D] font-bold uppercase tracking-wider">
                   <tr>
-                    <th className="p-3.5 rounded-l-xl">ID Persediaan</th>
+                    <th className="p-3.5 rounded-l-xl">ID Menu</th>
                     <th className="p-3.5">Nama Menu</th>
                     <th className="p-3.5">Kategori</th>
+                    <th className="p-3.5">Harga</th>
+                    <th className="p-3.5 text-center">Status</th>
                     <th className="p-3.5 text-center">Jumlah Stok</th>
-                    <th className="p-3.5 text-center rounded-r-xl">Aksi Update</th>
+                    <th className="p-3.5 text-center">Aksi Stok</th>
+                    <th className="p-3.5 text-center rounded-r-xl">Kelola Menu</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#F2E5D6]">
                   {persediaan.map((p) => (
-                    <tr key={p.id} className="hover:bg-[#FCFAF6] transition">
-                      <td className="p-3.5 font-mono font-bold text-[#8C7A70]">{p.id}</td>
-                      <td className="p-3.5 font-extrabold text-[#3C2923]">{p.nama}</td>
+                    <tr
+                      key={p.id}
+                      className={`hover:bg-[#FCFAF6] transition ${
+                        !p.aktif ? "bg-[#FAF8F5] opacity-75" : ""
+                      }`}
+                    >
+                      <td className="p-3.5 font-mono font-bold text-[#8C7A70]">{p.menuId}</td>
+                      <td className="p-3.5 font-extrabold text-[#3C2923]">
+                        {p.nama}
+                        {!p.aktif && (
+                          <span className="ml-2 text-[10px] text-red-600 font-bold bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-md">
+                            Nonaktif
+                          </span>
+                        )}
+                      </td>
                       <td className="p-3.5 text-[#7A6B63]">{p.kategori}</td>
+                      <td className="p-3.5 font-bold text-[#DE7525]">
+                        Rp{p.harga ? p.harga.toLocaleString("id-ID") : "-"}
+                      </td>
+                      <td className="p-3.5 text-center">
+                        {p.aktif ? (
+                          <span className="px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-[10px] font-bold">
+                            ✓ Aktif
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded-full bg-gray-200 text-gray-700 text-[10px] font-bold">
+                            ✕ Nonaktif
+                          </span>
+                        )}
+                      </td>
                       <td className="p-3.5 text-center">
                         <span className="font-black text-sm text-[#F8A106] bg-[#FFF0D0] px-3 py-1 rounded-xl">
                           {p.stok} pcs
@@ -434,6 +580,28 @@ export default function KitchenPage() {
                             +5
                           </button>
                         </div>
+                      </td>
+                      <td className="p-3.5 text-center">
+                        {p.aktif ? (
+                          <button
+                            onClick={() =>
+                              setHapusModal({
+                                open: true,
+                                menuId: p.menuId,
+                                namaMenu: p.nama,
+                                loading: false,
+                              })
+                            }
+                            className="px-2.5 py-1 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 font-bold rounded-lg text-[11px] transition shadow-xs"
+                            title="Nonaktifkan Menu"
+                          >
+                            🗑️ Hapus
+                          </button>
+                        ) : (
+                          <span className="text-[11px] text-gray-400 font-semibold italic">
+                            Nonaktif
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -498,6 +666,160 @@ export default function KitchenPage() {
                 className="flex-1 py-2 bg-[#DE7525] text-white font-bold rounded-xl text-xs shadow-sm hover:bg-[#C6651E]"
               >
                 Kirim Estimasi &rarr;
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Tambah Menu Baru (Bagian 1) */}
+      {tambahModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 border border-[#EFE5D8] shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#F5ECE0] pb-3">
+              <h3 className="font-black text-base text-[#3C2923] flex items-center gap-2">
+                <span>🍩</span> Tambah Menu Donat Baru
+              </h3>
+              <button
+                type="button"
+                onClick={() => setTambahModal(false)}
+                className="w-8 h-8 rounded-full bg-[#F4EBE1] text-[#6D5D55] font-bold text-xs flex items-center justify-center hover:bg-[#EFE5D8]"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleTambahMenu} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block font-bold text-[#3C2923] mb-1">
+                  Nama Menu Donat <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: Donat Tiramisu"
+                  value={formMenu.nama_menu}
+                  onChange={(e) => setFormMenu({ ...formMenu, nama_menu: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E5DACD] text-xs focus:ring-2 focus:ring-[#DE7525] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#3C2923] mb-1">
+                  Kategori Menu <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formMenu.kategori_menu}
+                  onChange={(e) => setFormMenu({ ...formMenu, kategori_menu: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E5DACD] text-xs focus:ring-2 focus:ring-[#DE7525] focus:outline-none bg-white"
+                >
+                  <option value="Donat Topping">Donat Topping</option>
+                  <option value="Donat Topping Double">Donat Topping Double</option>
+                  <option value="Donat Klasik">Donat Klasik</option>
+                  <option value="Donat Spesial">Donat Spesial</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-[#3C2923] mb-1">
+                    Harga Satuan (Rp) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="1000"
+                    step="500"
+                    required
+                    placeholder="Contoh: 5000"
+                    value={formMenu.harga_satuan}
+                    onChange={(e) => setFormMenu({ ...formMenu, harga_satuan: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E5DACD] text-xs focus:ring-2 focus:ring-[#DE7525] focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-[#3C2923] mb-1">
+                    Stok Awal (pcs) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    required
+                    placeholder="Contoh: 20"
+                    value={formMenu.stok_awal}
+                    onChange={(e) => setFormMenu({ ...formMenu, stok_awal: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E5DACD] text-xs focus:ring-2 focus:ring-[#DE7525] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-[#FFF8EE] border border-[#FAD692] p-3 rounded-xl text-[11px] text-[#77431D]">
+                ℹ️ Menu dan data persediaan akan dibuat secara bersamaan dalam satu transaksi database.
+              </div>
+
+              <div className="flex items-center gap-2 pt-2 border-t border-[#F5ECE0]">
+                <button
+                  type="button"
+                  onClick={() => setTambahModal(false)}
+                  disabled={loadingTambah}
+                  className="flex-1 py-2.5 bg-[#F4EBE1] text-[#6D5D55] font-bold rounded-xl text-xs"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={loadingTambah}
+                  className="flex-1 py-2.5 bg-gradient-to-r from-[#F8A106] to-[#DE7525] hover:from-[#E69300] hover:to-[#C6651E] text-white font-extrabold rounded-xl text-xs shadow-md transition disabled:opacity-50"
+                >
+                  {loadingTambah ? "Menyimpan..." : "Simpan Menu Baru"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Dialog Konfirmasi Hapus Menu (Soft Delete) */}
+      {hapusModal.open && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 border border-[#EFE5D8] shadow-2xl space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center text-2xl mx-auto">
+              ⚠️
+            </div>
+            <div className="text-center space-y-1">
+              <h3 className="font-black text-base text-[#3C2923]">
+                Konfirmasi Hapus Menu
+              </h3>
+              <p className="text-xs text-[#7A6B63]">
+                Apakah Anda yakin ingin menonaktifkan menu{" "}
+                <strong className="text-[#3C2923]">&ldquo;{hapusModal.namaMenu}&rdquo;</strong>?
+              </p>
+            </div>
+
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-[11px] text-red-700 space-y-1">
+              <p className="font-bold">Perhatian (Soft Delete):</p>
+              <p>
+                Menu ini tidak akan tampil lagi di katalog pemesanan pelanggan. Namun data riwayat pesanan pelanggan sebelumnya yang memuat donat ini tetap aman dan tidak akan hilang.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setHapusModal({ open: false, menuId: "", namaMenu: "", loading: false })}
+                disabled={hapusModal.loading}
+                className="flex-1 py-2.5 bg-[#F4EBE1] text-[#6D5D55] font-bold rounded-xl text-xs"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleHapusMenu}
+                disabled={hapusModal.loading}
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs shadow-md transition disabled:opacity-50"
+              >
+                {hapusModal.loading ? "Memproses..." : "Ya, Hapus Menu"}
               </button>
             </div>
           </div>

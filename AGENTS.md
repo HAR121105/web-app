@@ -55,6 +55,8 @@ Role: Pelanggan, Kasir, Kitchen, Owner.
 | Fase 9: Persiapan Deployment | **C**: Rencana rilis ke cloud database Neon dan hosting Vercel.<br>**F**: Buat `db/seed.sql` khusus cloud, `docs/deployment.md`, `docs/RINGKASAN-IMPLEMENTASI.md`, dan verifikasi `npm run build`.<br>**C**: Tanpa mengekspos credential .env, build lolos tanpa error. | Skrip seed mandiri dan panduan deployment lengkap siap untuk dieksekusi pengguna. |
 | Perbaikan Code Review (FIX 1–7) | **C**: Temuan audit commit 2ba8a7a..c4cb775 (keamanan kredensial, SESSION_SECRET, race condition kasir, .env.example, bukti QRIS, verify-access HTTP nyata, dan dokumen jujur).<br>**F**: Hapus demo password dari UI & repo, bangkitkan hash acak kuat di `db/seed.sql`, wajibkan SESSION_SECRET min 32 char, tolak validasi ulang transaksi (409) secara atomik, sertakan `.env.example`, wajib bukti QRIS & hardening input, tulis ulang skrip uji HTTP nyata, buat `db/checks.sql`, dan rapikan tautan.<br>**C**: 1 commit per fix, tanpa `git push`, tanpa merusak skema atau dependensi baru. | Berhasil diselesaikan dalam 7 commit lokal terpisah (FIX-1 s.d. FIX-7) dan lulus lint, typecheck, dan build. |
 | Rilis Produksi Cloud | **C**: Modul 4 APSI Donat Habil.<br>**F**: Deploy database Neon PostgreSQL dan aplikasi web serverless Vercel.<br>**C**: Skema 12 tabel sinkron via `db push`, data awal `db/seed.sql` & `db/checks.sql` aktif, CI/CD Vercel aktif. | Berhasil live di `https://web-app-mu-flame-33.vercel.app/` terhubung langsung dengan Neon PostgreSQL. |
+| Fitur Menu Kitchen, Ekspor CSV Owner, & 6 Menu Baru | **C**: Toko Donat Habil Modul 4 APSI.<br>**F**: Bagian 1: Kitchen tambah menu & soft delete (`aktif`); Bagian 2: Owner ekspor CSV UTF-8 BOM & hapus rekap; Bagian 3: 6 menu baru (stok 20) via seed idempotent.<br>**C**: Soft delete tidak merusak riwayat transaksi/pesanan, tanpa library baru, validasi server-side, RBAC 403, jangan commit/push. | Berhasil diimplementasikan: skema ditambah kolom `aktif`, form tambah/hapus menu di Kitchen, tombol unduh CSV & dialog hapus rekap di Owner, 6 menu baru tersimpan di database lokal & Neon, lulus lint, tsc, dan build. |
+| Penghapusan Rekapan Persisten Owner | **C**: Toko Donat Habil Modul 4 APSI.<br>**F**: Tabel 13 `rekap_dihapus`, `DELETE /api/owner/rekap` persisten, `POST /api/owner/rekap/pulihkan`, query filter `?terhapus=true`, dan re-fetch autoritatif di UI.<br>**C**: Jangan sentuh transaksi asli, 3NF utuh, database lokal saja, lulus 21 assert test HTTP nyata, tanpa commit/push. | Berhasil diimplementasikan dan diverifikasi 100%: 21 PASS (0 FAIL), omzet sinkron, audit log PostgreSQL terjaga utuh. |
 
 ### Struktur Endpoint API Lengkap
 - `POST /api/auth/login`: Autentikasi bcrypt akun & penerbitan cookie session HMAC-SHA256 (Publik).
@@ -75,10 +77,19 @@ Role: Pelanggan, Kasir, Kitchen, Owner.
 - `PATCH /api/pesanan/[id]/status`: Update ke 'Siap Diambil' dengan pemotongan stok otomatis pada tabel `persediaan` (Kitchen).
 - `GET /api/kitchen/persediaan`: Memantau stok seluruh varian donat (Kitchen).
 - `PATCH /api/kitchen/persediaan/[id]`: Mengubah manual jumlah persediaan donat (Kitchen).
+- `POST /api/kitchen/menu`: Tambah menu baru & persediaan awal secara atomik ($transaction) (Kitchen).
+- `DELETE /api/kitchen/menu/[id]`: Soft delete menu (`aktif: false`) (Kitchen).
+- `PATCH /api/kitchen/menu/[id]`: Mengaktifkan kembali menu yang dinonaktifkan (Kitchen).
 - `GET /api/owner/laporan`: Laporan agregasi omzet, donat terlaris, dan ulasan pelanggan per periode (Owner).
+- `GET /api/owner/rekap/export`: Unduh rekapitulasi penjualan dalam format CSV UTF-8 BOM (Owner).
+- `DELETE /api/owner/rekap`: Menyembunyikan transaksi dari laporan dan mencatat ke tabel rekap_dihapus secara persisten (Owner).
+- `POST /api/owner/rekap/pulihkan`: Memulihkan transaksi yang disembunyikan kembali ke laporan aktif (Owner).
 
 ### Aturan Bisnis & Integritas Data
 1. **Perhitungan Harga Server-Side**: Harga satuan dan total tagihan selalu dihitung dari tabel `menu` pada database. Payload harga dari klien diabaikan untuk mencegah manipulasi.
 2. **Pengurangan Stok Otomatis**: Saat Kitchen menandai pesanan selesai (`Siap Diambil`), sistem secara atomik memotong `jumlah_persediaan` di tabel `persediaan` menggunakan `prisma.$transaction`. Jika stok tidak mencukupi, operasi dibatalkan total.
 3. **Penyimpanan Bukti Bayar**: Bukti transfer QRIS disimpan sebagai Base64 Data URL (maks. 500 KB) pada kolom `bukti_pembayaran` (`TEXT`), kompatibel dengan hosting serverless Vercel tanpa dependensi file storage eksternal.
 4. **Proteksi Akses RBAC**: Seluruh endpoint API memverifikasi tanda tangan digital token HMAC-SHA256 via helper `requireAuth()`. Akses navigasi halaman frontend diproteksi oleh file convention Next.js 16 `proxy.ts`.
+5. **Soft Delete Menu**: Menu yang dinonaktifkan (`aktif = false`) disembunyikan dari katalog Pelanggan dan ditolak saat checkout, namun data historis `detail_pesanan` tetap utuh dan foreign key terjaga.
+6. **Ekspor CSV Mandiri**: File CSV dihasilkan langsung dengan byte order mark UTF-8 (`\uFEFF`) dan escape RFC 4180 tanpa dependensi pustaka pihak ketiga.
+7. **Integritas & Pemulihan Rekapan Owner**: Penghapusan baris rekapitulasi menyimpan audit di tabel `rekap_dihapus` tanpa menghapus data fisik transaksi, pesanan, atau detail_pesanan asli. Pemilik toko dapat melihat daftar rekapan tersembunyi dan memulihkannya kembali ke laporan aktif kapan saja secara persisten.

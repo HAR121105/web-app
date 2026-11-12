@@ -4,12 +4,17 @@ import { prisma } from "./prisma";
 type DbClient = typeof prisma | Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
 export async function generateId(
-  prefix: "PSN" | "TRX" | "ULS" | "PLG" | "PSD",
+  prefix: "PSN" | "TRX" | "ULS" | "PLG" | "PSD" | "PRSD" | "MNU",
   db: DbClient = prisma
 ): Promise<string> {
   let existingIds: string[] = [];
 
   switch (prefix) {
+    case "MNU": {
+      const rows = await db.menu.findMany({ select: { id_menu: true } });
+      existingIds = rows.map((r: { id_menu: string }) => r.id_menu);
+      break;
+    }
     case "PSN": {
       const rows = await db.pesanan.findMany({ select: { id_pesanan: true } });
       existingIds = rows.map((r: { id_pesanan: string }) => r.id_pesanan);
@@ -30,7 +35,8 @@ export async function generateId(
       existingIds = rows.map((r: { id_pelanggan: string }) => r.id_pelanggan);
       break;
     }
-    case "PSD": {
+    case "PSD":
+    case "PRSD": {
       const rows = await db.persediaan.findMany({ select: { id_persediaan: true } });
       existingIds = rows.map((r: { id_persediaan: string }) => r.id_persediaan);
       break;
@@ -38,7 +44,10 @@ export async function generateId(
   }
 
   let maxNum = 0;
-  const regex = new RegExp(`^${prefix}(\\d+)$`, "i");
+  const regex =
+    prefix === "PRSD" || prefix === "PSD"
+      ? /^(?:PRSD|PSD)(\d+)$/i
+      : new RegExp(`^${prefix}(\\d+)$`, "i");
 
   for (const id of existingIds) {
     const match = id.match(regex);
@@ -51,6 +60,11 @@ export async function generateId(
   }
 
   const nextNum = maxNum + 1;
+  if (prefix === "PRSD" || prefix === "PSD") {
+    // Ikuti konvensi PRSD01, PRSD02, ..., PRSD10
+    const padding = nextNum < 100 ? 2 : 3;
+    return `PRSD${String(nextNum).padStart(padding, "0")}`;
+  }
   return `${prefix}${String(nextNum).padStart(3, "0")}`;
 }
 

@@ -4,6 +4,9 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   try {
     const menus = await prisma.menu.findMany({
+      where: {
+        aktif: true,
+      },
       include: {
         persediaan: true,
       },

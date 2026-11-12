@@ -72,7 +72,8 @@ CREATE TABLE menu (
     id_menu       VARCHAR(10)  PRIMARY KEY,
     nama_menu     VARCHAR(100) NOT NULL,
     kategori_menu VARCHAR(50)  NOT NULL,
-    harga_satuan  INT          NOT NULL CHECK (harga_satuan > 0)
+    harga_satuan  INT          NOT NULL CHECK (harga_satuan > 0),
+    aktif         BOOLEAN      NOT NULL DEFAULT TRUE
 );
 
 -- 7. TABEL PERSEDIAAN
@@ -141,6 +142,13 @@ CREATE TABLE ulasan (
     id_pesanan       VARCHAR(10) NOT NULL UNIQUE REFERENCES pesanan(id_pesanan) ON DELETE CASCADE,
     kritik_pelanggan TEXT,
     saran_pelanggan  TEXT
+);
+
+-- 13. TABEL REKAP DIHAPUS (Audit Pengecualian Laporan Owner)
+CREATE TABLE rekap_dihapus (
+    id_transaksi VARCHAR(10) PRIMARY KEY REFERENCES transaksi(id_transaksi) ON DELETE CASCADE,
+    dihapus_pada TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    dihapus_oleh VARCHAR(50)
 );
 
 -- =============================================================================

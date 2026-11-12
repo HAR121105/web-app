@@ -23,6 +23,7 @@ export async function GET() {
       kategori_menu: p.menu.kategori_menu,
       harga_satuan: p.menu.harga_satuan,
       jumlah_persediaan: p.jumlah_persediaan,
+      aktif: p.menu.aktif,
     }));
 
     return NextResponse.json({ persediaan: formatted });

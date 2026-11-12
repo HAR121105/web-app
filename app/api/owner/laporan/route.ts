@@ -9,6 +9,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const periode = searchParams.get("periode") || "bulan_ini";
+    const terhapus = searchParams.get("terhapus") === "true";
 
     const now = new Date();
     let startDate: Date;
@@ -25,8 +26,14 @@ export async function GET(request: Request) {
       startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
     }
 
+    // Ambil daftar rekap_dihapus untuk audit pengecualian
+    const rekapDihapusList = await prisma.rekap_dihapus.findMany({
+      orderBy: { dihapus_pada: "desc" },
+    });
+    const deletedTrxMap = new Map(rekapDihapusList.map((d) => [d.id_transaksi, d]));
+
     // Ambil transaksi dalam periode
-    const transaksiList = await prisma.transaksi.findMany({
+    const rawTransaksiList = await prisma.transaksi.findMany({
       where: {
         waktu_transaksi: {
           gte: startDate,
@@ -49,6 +56,12 @@ export async function GET(request: Request) {
         waktu_transaksi: "desc",
       },
     });
+
+    // Filter transaksi: jika ?terhapus=true tampilkan HANYA yang ada di rekap_dihapus,
+    // jika default (terhapus=false) kecualikan transaksi yang ada di rekap_dihapus.
+    const transaksiList = terhapus
+      ? rawTransaksiList.filter((t) => deletedTrxMap.has(t.id_transaksi))
+      : rawTransaksiList.filter((t) => !deletedTrxMap.has(t.id_transaksi));
 
     let totalOmzet = 0;
     let totalTransaksiBerhasil = 0;
@@ -109,10 +122,13 @@ export async function GET(request: Request) {
         .map((d) => `${d.jumlah_pesanan}x ${d.menu.nama_menu}`)
         .join(", ");
 
-      const waktuFormatted = new Date(t.waktu_transaksi).toLocaleString("id-ID", {
-        dateStyle: "short",
-        timeStyle: "short",
-      }) + " WIB";
+      const waktuFormatted =
+        new Date(t.waktu_transaksi).toLocaleString("id-ID", {
+          dateStyle: "short",
+          timeStyle: "short",
+        }) + " WIB";
+
+      const deletedMeta = deletedTrxMap.get(t.id_transaksi);
 
       return {
         id: t.id_transaksi,
@@ -124,12 +140,17 @@ export async function GET(request: Request) {
         total: t.total_transaksi,
         metode: t.metode_pembayaran,
         status: t.status_pembayaran,
+        isDeleted: !!deletedMeta,
+        dihapusPada: deletedMeta ? deletedMeta.dihapus_pada.toISOString() : null,
+        dihapusOleh: deletedMeta ? deletedMeta.dihapus_oleh : null,
       };
     });
 
     return NextResponse.json({
       laporan: {
         periode,
+        terhapus,
+        totalRekapTerhapus: rekapDihapusList.length,
         totalOmzet,
         totalTransaksiBerhasil,
         rataRataTransaksi:
