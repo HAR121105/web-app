@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { logoutClient } from "@/lib/client-auth";
+import { getDonutImage } from "@/lib/menu-images";
 
 interface AntreanDapur {
   id: string;
@@ -536,12 +538,23 @@ export default function KitchenPage() {
                     >
                       <td className="p-3.5 font-mono font-bold text-[#8C7A70]">{p.menuId}</td>
                       <td className="p-3.5 font-extrabold text-[#3C2923]">
-                        {p.nama}
-                        {!p.aktif && (
-                          <span className="ml-2 text-[10px] text-red-600 font-bold bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-md">
-                            Nonaktif
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2.5">
+                          <Image
+                            src={getDonutImage(p.menuId, p.nama)}
+                            alt={p.nama}
+                            width={36}
+                            height={36}
+                            className="w-9 h-9 rounded-xl object-cover border border-[#EADBCC] flex-shrink-0 shadow-xs"
+                          />
+                          <div>
+                            <span>{p.nama}</span>
+                            {!p.aktif && (
+                              <span className="ml-2 text-[10px] text-red-600 font-bold bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-md">
+                                Nonaktif
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </td>
                       <td className="p-3.5 text-[#7A6B63]">{p.kategori}</td>
                       <td className="p-3.5 font-bold text-[#DE7525]">

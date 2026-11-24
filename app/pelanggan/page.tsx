@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { logoutClient } from "@/lib/client-auth";
+import { getDonutImage, getDonutDesc } from "@/lib/menu-images";
 
 interface CartItem {
   id: string;
@@ -35,16 +37,6 @@ interface PesananDisplay {
   ulasanAda: boolean;
 }
 
-const getEmojiForDonut = (nama: string) => {
-  const n = nama.toLowerCase();
-  if (n.includes("cokelat") || n.includes("meses")) return "🍫";
-  if (n.includes("keju") || n.includes("cheese")) return "🧀";
-  if (n.includes("matcha") || n.includes("green tea")) return "🍵";
-  if (n.includes("stroberi") || n.includes("strawberry")) return "🍓";
-  if (n.includes("kacang") || n.includes("almond")) return "🥜";
-  return "🍩";
-};
-
 export default function PelangganPage() {
   const [activeTab, setActiveTab] = useState<"katalog" | "pesanan">("katalog");
   const [selectedKategori, setSelectedKategori] = useState<string>("Semua");
@@ -58,8 +50,8 @@ export default function PelangganPage() {
       name: "Donat Gula Halus",
       kategori: "Donat Klasik",
       price: 4000,
-      image: "🍩",
-      desc: "Donat kentang tradisional dengan taburan gula halus salju premium yang manis lembut.",
+      image: getDonutImage("MNU001", "Donat Gula Halus"),
+      desc: getDonutDesc("MNU001", "Donat Gula Halus"),
       stok: 60,
     },
     {
@@ -67,8 +59,8 @@ export default function PelangganPage() {
       name: "Donat Cokelat Meses",
       kategori: "Donat Topping",
       price: 4000,
-      image: "🍫",
-      desc: "Balutan cokelat tebal nikmat bertabur butiran meses cokelat manis melimpah.",
+      image: getDonutImage("MNU002", "Donat Cokelat Meses"),
+      desc: getDonutDesc("MNU002", "Donat Cokelat Meses"),
       stok: 55,
     },
     {
@@ -76,8 +68,8 @@ export default function PelangganPage() {
       name: "Donat Keju",
       kategori: "Donat Topping",
       price: 5000,
-      image: "🧀",
-      desc: "Donat empuk gurih dengan parutan keju cheddar melimpah dan krim manis spesial.",
+      image: getDonutImage("MNU003", "Donat Keju"),
+      desc: getDonutDesc("MNU003", "Donat Keju"),
       stok: 48,
     },
   ]);
@@ -126,8 +118,8 @@ export default function PelangganPage() {
               name: m.nama_menu,
               kategori: m.kategori_menu,
               price: m.harga_satuan,
-              image: getEmojiForDonut(m.nama_menu),
-              desc: `Donat lezat ${m.nama_menu} kategori ${m.kategori_menu} dibuat hangat dengan bahan premium.`,
+              image: getDonutImage(m.id_menu, m.nama_menu),
+              desc: getDonutDesc(m.id_menu, m.nama_menu, m.kategori_menu),
               stok: m.jumlah_persediaan,
             }));
             setMenuList(mapped);
@@ -436,8 +428,18 @@ export default function PelangganPage() {
                   className="bg-white rounded-3xl p-5 border border-[#EFE5D8] shadow-sm hover:shadow-md hover:border-[#F8A106] transition flex flex-col justify-between group"
                 >
                   <div>
-                    <div className="w-full h-40 bg-gradient-to-br from-[#FFF9E8] to-[#FFF0D0] rounded-2xl flex items-center justify-center text-6xl shadow-inner mb-4 group-hover:scale-105 transition duration-200">
-                      {m.image}
+                    <div className="w-full h-48 bg-[#FFF9E8] rounded-2xl overflow-hidden mb-4 shadow-inner relative group-hover:shadow-md transition duration-200 flex items-center justify-center">
+                      {m.image && m.image.startsWith("/") ? (
+                        <Image
+                          src={m.image}
+                          alt={m.name}
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          className="object-cover group-hover:scale-105 transition duration-300"
+                        />
+                      ) : (
+                        <span className="text-6xl">{m.image || "🍩"}</span>
+                      )}
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold text-[#9C7146] uppercase tracking-wider">
@@ -591,7 +593,19 @@ export default function PelangganPage() {
                       className="flex items-center justify-between p-3 rounded-2xl bg-[#FCFAF6] border border-[#EFE5D8]"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-2xl">{item.image}</span>
+                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-[#FFF9E8] flex-shrink-0 flex items-center justify-center border border-[#EFE5D8] relative">
+                          {item.image && item.image.startsWith("/") ? (
+                            <Image
+                              src={item.image}
+                              alt={item.name}
+                              fill
+                              sizes="48px"
+                              className="object-cover"
+                            />
+                          ) : (
+                            <span className="text-2xl">{item.image || "🍩"}</span>
+                          )}
+                        </div>
                         <div>
                           <div className="text-xs font-bold text-[#3C2923]">{item.name}</div>
                           <div className="text-[11px] text-[#F8A106] font-bold">

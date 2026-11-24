@@ -2,6 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { getDonutImage } from "@/lib/menu-images";
 
 export default function HomePage() {
   const menuItems = [
@@ -10,7 +12,7 @@ export default function HomePage() {
       name: "Donat Gula Halus",
       kategori: "Donat Klasik",
       price: 4000,
-      image: "🍩",
+      image: getDonutImage("MNU001", "Donat Gula Halus"),
       desc: "Donat lembut berbalut taburan gula salju halus yang manis pas di lidah.",
       stok: 60,
     },
@@ -19,7 +21,7 @@ export default function HomePage() {
       name: "Donat Cokelat Meses",
       kategori: "Donat Topping",
       price: 4000,
-      image: "🍫",
+      image: getDonutImage("MNU002", "Donat Cokelat Meses"),
       desc: "Topping cokelat lumer tebal dengan taburan meses cokelat premium melimpah.",
       stok: 55,
     },
@@ -28,7 +30,7 @@ export default function HomePage() {
       name: "Donat Keju",
       kategori: "Donat Topping",
       price: 5000,
-      image: "🧀",
+      image: getDonutImage("MNU003", "Donat Keju"),
       desc: "Donat empuk bertabur parutan keju cheddar gurih dan krim mentega manis.",
       stok: 48,
     },
@@ -132,7 +134,19 @@ export default function HomePage() {
                     className="flex items-center justify-between p-2.5 rounded-xl bg-[#FCFAF6] hover:bg-[#F9F4EB] border border-[#EFE5D8] transition"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">{m.image}</span>
+                      <div className="w-10 h-10 rounded-xl overflow-hidden bg-[#FFF9E8] flex-shrink-0 flex items-center justify-center border border-[#EFE5D8] relative">
+                        {m.image && m.image.startsWith("/") ? (
+                          <Image
+                            src={m.image}
+                            alt={m.name}
+                            fill
+                            sizes="40px"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <span className="text-2xl">{m.image || "🍩"}</span>
+                        )}
+                      </div>
                       <div>
                         <div className="text-xs font-bold text-[#3C2923]">
                           {m.name}

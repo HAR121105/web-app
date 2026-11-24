@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { logoutClient } from "@/lib/client-auth";
+import { getDonutImage } from "@/lib/menu-images";
 
 interface TransaksiOwner {
   id: string;
@@ -335,7 +337,7 @@ export default function OwnerPage() {
                 >
                   <div className="flex items-center gap-3">
                     <span
-                      className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${
+                      className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 ${
                         idx === 0
                           ? "bg-[#F8A106] text-white"
                           : idx === 1
@@ -345,6 +347,13 @@ export default function OwnerPage() {
                     >
                       {idx + 1}
                     </span>
+                    <Image
+                      src={getDonutImage(m.id_menu, m.nama)}
+                      alt={m.nama}
+                      width={36}
+                      height={36}
+                      className="w-9 h-9 rounded-xl object-cover border border-[#EADBCC] flex-shrink-0 shadow-xs"
+                    />
                     <div>
                       <h4 className="font-bold text-xs text-[#3C2923]">{m.nama}</h4>
                       <span className="text-[10px] text-[#8C7A70]">{m.id_menu}</span>
