@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
@@ -62,11 +63,16 @@ export default function LoginPage() {
         <div className="absolute -bottom-14 -left-14 w-36 h-36 bg-[#77431D]/10 rounded-full blur-2xl" />
 
         {/* Brand & Logo Donat */}
-        <div className="text-center mb-8 relative z-10">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-tr from-[#F8A106] to-[#FFCD2E] rounded-full shadow-lg mb-4 shadow-[#F8A106]/30">
-            <span className="text-4xl" role="img" aria-label="donut">
-              🍩
-            </span>
+        <div className="text-center mb-7 relative z-10">
+          <div className="inline-block relative w-28 h-28 rounded-full overflow-hidden shadow-xl mb-3 ring-4 ring-[#F8A106]/30 shadow-[#F8A106]/20 bg-white">
+            <Image
+              src="/images/habil-donuts-logo.jpeg"
+              alt="Habil Donuts Logo"
+              width={112}
+              height={112}
+              className="w-full h-full object-cover"
+              priority
+            />
           </div>
           <h2 className="text-sm font-semibold tracking-widest text-[#9C7146] uppercase">
             Selamat Datang di

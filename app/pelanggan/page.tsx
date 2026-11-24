@@ -319,9 +319,15 @@ export default function PelangganPage() {
       {/* Header Pelanggan Sesuai Desain Figma */}
       <header className="sticky top-0 z-40 bg-[#FAF7F2]/95 backdrop-blur-md border-b border-[#EFE5D8] px-6 py-3.5">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full bg-[#F8A106] flex items-center justify-center text-lg shadow-sm">
-              🍩
+          <Link href="/" className="flex items-center gap-3">
+            <div className="relative w-12 h-12 rounded-full overflow-hidden shadow-sm shrink-0 ring-2 ring-[#F8A106]/30 bg-white">
+              <Image
+                src="/images/habil-donuts-logo.jpeg"
+                alt="Logo Habil Donuts"
+                width={48}
+                height={48}
+                className="w-full h-full object-cover"
+              />
             </div>
             <span className="font-black text-lg text-[#3C2923] tracking-tight">
               donat habil.

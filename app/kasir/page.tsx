@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { logoutClient } from "@/lib/client-auth";
 
 interface PesananKasir {
@@ -177,8 +178,14 @@ export default function KasirPage() {
         <div>
           {/* Header Panel */}
           <div className="flex items-center gap-3 pb-6 border-b border-[#F2E5D6]">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#77431D] to-[#A05C2C] flex items-center justify-center text-xl text-white shadow-md">
-              🧾
+            <div className="relative w-12 h-12 rounded-2xl overflow-hidden shadow-md shrink-0 ring-2 ring-[#77431D]/20 bg-white">
+              <Image
+                src="/images/habil-donuts-logo.jpeg"
+                alt="Logo Habil Donuts"
+                width={48}
+                height={48}
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               <h2 className="text-sm font-black text-[#3C2923] tracking-tight">

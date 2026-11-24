@@ -42,8 +42,14 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 bg-[#FAF7F2]/90 backdrop-blur-md border-b border-[#EFE7DC] px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#F8A106] to-[#FFCD2E] flex items-center justify-center text-xl shadow-md">
-              🍩
+            <div className="relative w-12 h-12 rounded-full overflow-hidden shadow-md shrink-0 ring-2 ring-[#F8A106]/30 bg-white">
+              <Image
+                src="/images/habil-donuts-logo.jpeg"
+                alt="Logo Habil Donuts"
+                width={48}
+                height={48}
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               <span className="text-xl font-black text-[#3C2923] tracking-tight">

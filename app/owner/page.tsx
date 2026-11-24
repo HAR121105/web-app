@@ -198,8 +198,14 @@ export default function OwnerPage() {
       <header className="sticky top-0 z-40 bg-white border-b border-[#EFE5D8] px-6 py-4 shadow-sm">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#3C2923] to-[#77431D] flex items-center justify-center text-xl text-white shadow-md">
-              👑
+            <div className="relative w-12 h-12 rounded-2xl overflow-hidden shadow-md shrink-0 ring-2 ring-[#3C2923]/20 bg-white">
+              <Image
+                src="/images/habil-donuts-logo.jpeg"
+                alt="Logo Habil Donuts"
+                width={48}
+                height={48}
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               <h1 className="text-base font-black text-[#3C2923] tracking-tight">

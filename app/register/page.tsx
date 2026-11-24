@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
@@ -67,9 +68,16 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#FFF9E8] via-[#FDF5E6] to-[#F5ECE0] p-4 text-[#3C2923]">
       <div className="w-full max-w-lg bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl p-8 border border-[#F3E2CF] relative my-6">
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-tr from-[#F8A106] to-[#FFCD2E] rounded-full shadow-md mb-3">
-            <span className="text-3xl">🍩</span>
+        <div className="text-center mb-5">
+          <div className="inline-block relative w-24 h-24 rounded-full overflow-hidden shadow-lg mb-2 ring-4 ring-[#F8A106]/30 bg-white">
+            <Image
+              src="/images/habil-donuts-logo.jpeg"
+              alt="Habil Donuts Logo"
+              width={96}
+              height={96}
+              className="w-full h-full object-cover"
+              priority
+            />
           </div>
           <h1 className="text-2xl font-extrabold text-[#3C2923]">
             Registrasi Akun Pelanggan
